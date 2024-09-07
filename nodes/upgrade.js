@@ -11,12 +11,29 @@ module.exports = function(RED) {
 					else if (topic === 'changelog')
 						return client.getChangelog();
 					else if (topic === 'upgrade')
-						return client.startUpgrade();
+						return client.getArtifact().then(async artifact => {
+							const to_id = artifact.name.split('-').slice(-1)[0].slice(0, 7);
+							const from_id = await client.nvram('firmver_sub');
+							if (from_id.split('_')[1] === to_id)
+								return;
+							return client.startUpgrade(artifact.id).then(() => {
+								return new Promise(res => {
+									setTimeout(function loop() {
+										client.nvram('firmver_sub').then(firmver_sub => {
+											if (firmver_sub !== from_id)
+												return res(true);
+											setTimeout(loop, 5000);
+										}).catch(() => setTimeout(loop, 5000))
+									}, 5000);
+								});
+							});
+						});
 				})
 				.then(payload => {
 					if (!payload)
-						return;
-					msg.payload = payload;
+						msg.error = 'Firmware not found';
+					else
+						msg.payload = payload;
 					this.send(msg);
 				})
 				.catch(({ message, code }) => {
