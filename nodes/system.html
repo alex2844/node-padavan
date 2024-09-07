@@ -1,0 +1,43 @@
+<script type="text/html" data-template-name="padavan-system">
+	<div class="form-row">
+		<label for="node-input-settings"><i class="fa fa-cog"></i> Config</label>
+		<input id="node-input-settings" />
+	</div>
+	<div class="form-row">
+		<label for="node-input-name"><i class="fa fa-pencil"></i> Name</label>
+		<input type="text" id="node-input-name" />
+	</div>
+	<div class="form-row">
+		<label for="node-input-topic"><i class="fa fa-envelope-o"></i> Topic</label>
+		<input type="text" id="node-input-topic">
+		<input type="hidden" id="node-input-topicType">
+	</div>
+</script>
+<script type="text/javascript">
+RED.nodes.registerType('padavan-system', {
+	category: 'Padavan',
+	defaults: {
+		settings: { value: null, required: true, type: 'padavan-config' },
+		name: { value: '' },
+		topic: { value: 'topic' },
+		topicType: { value: 'msg' }
+	},
+	icon: 'font-awesome/fa-power-off',
+	inputs: 1,
+	outputs: 1,
+	color: '#49afcd',
+	paletteLabel: 'System',
+	label: function() {
+		return this.name || 'System';
+	},
+	oneditprepare: function() {
+		$('#node-input-topic').typedInput({
+			types: [ 'msg', {
+				value: 'action',
+				options: [ 'status', 'log', 'reboot' ]
+			}],
+			typeField: '#node-input-topicType'
+		});
+	}
+});
+</script>
