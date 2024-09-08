@@ -1,7 +1,7 @@
 {
 	"name": "node-padavan",
 	"version": "0.0.1",
-	"description": "",
+	"description": "Control your router with Padavan firmware",
 	"main": "main.mjs",
 	"node-red": {
 		"nodes": {
