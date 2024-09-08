@@ -3,14 +3,14 @@ module.exports = function(RED) {
 		RED.nodes.createNode(this, config);
 		const settings = RED.nodes.getNode(config.settings);
 		this.on('input', msg => {
-			const topic = RED.util.evaluateNodeProperty(config.topic, config.topicType, this, msg);
-			if ([ 'status', 'log', 'reboot' ].includes(topic))
+			msg.topic = RED.util.evaluateNodeProperty(config.topic, config.topicType, this, msg);
+			if ([ 'status', 'log', 'reboot' ].includes(msg.topic))
 				settings.getClient().then(client => {
-					if (topic === 'status')
+					if (msg.topic === 'status')
 						return client.getStatus();
-					else if (topic === 'log')
+					else if (msg.topic === 'log')
 						return client.getLog();
-					else if (topic === 'reboot')
+					else if (msg.topic === 'reboot')
 						return client.startReboot();
 				})
 				.then(payload => {

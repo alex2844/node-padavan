@@ -3,14 +3,14 @@ module.exports = function(RED) {
 		RED.nodes.createNode(this, config);
 		const settings = RED.nodes.getNode(config.settings);
 		this.on('input', msg => {
-			const topic = RED.util.evaluateNodeProperty(config.topic, config.topicType, this, msg);
-			if ([ 'build', 'changelog', 'upgrade' ].includes(topic))
+			msg.topic = RED.util.evaluateNodeProperty(config.topic, config.topicType, this, msg);
+			if ([ 'build', 'changelog', 'upgrade' ].includes(msg.topic))
 				settings.getClient().then(client => {
-					if (topic === 'build')
+					if (msg.topic === 'build')
 						return client.startBuild();
-					else if (topic === 'changelog')
+					else if (msg.topic === 'changelog')
 						return client.getChangelog();
-					else if (topic === 'upgrade')
+					else if (msg.topic === 'upgrade')
 						return client.getArtifact().then(async artifact => {
 							const to_id = artifact.name.split('-').slice(-1)[0].slice(0, 7);
 							const from_id = await client.nvram('firmver_sub');

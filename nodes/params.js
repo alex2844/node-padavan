@@ -3,19 +3,19 @@ module.exports = function(RED) {
 		RED.nodes.createNode(this, config);
 		const settings = RED.nodes.getNode(config.settings);
 		this.on('input', msg => {
-			const payload = RED.util.evaluateNodeProperty(config.payload, config.payloadType, this, msg);
-			const topic = RED.util.evaluateNodeProperty(config.topic, config.topicType, this, msg);
-			if ([ 'list', 'get', 'set' ].includes(topic))
+			msg.payload = RED.util.evaluateNodeProperty(config.payload, config.payloadType, this, msg);
+			msg.topic = RED.util.evaluateNodeProperty(config.topic, config.topicType, this, msg);
+			if ([ 'list', 'get', 'set' ].includes(msg.topic))
 				settings.getClient().then(client => {
-					if (topic === 'list')
+					if (msg.topic === 'list')
 						return client.getParams();
 					else{
-						if (!payload || !Object.keys(payload).length)
+						if (!msg.payload || !Object.keys(msg.payload).length)
 							throw new Error('Input payload missing');
-						if (topic === 'get')
-							return client.getParams(payload);
-						else if (topic === 'set')
-							return client.setParams(payload);
+						if (msg.topic === 'get')
+							return client.getParams(msg.payload);
+						else if (msg.topic === 'set')
+							return client.setParams(msg.payload);
 					}
 				})
 				.then(payload => {
