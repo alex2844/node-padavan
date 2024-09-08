@@ -30,7 +30,7 @@ export class Padavan {
 								code,
 								message: stderr.join('')
 							});
-						return res(stdout.join(''))
+						return res(stdout.join('').slice(0, -1))
 					}).on('data', chunk => stdout.push(chunk)).stderr.on('data', chunk => stderr.push(chunk));
 				});
 			}).connect({
@@ -43,7 +43,7 @@ export class Padavan {
 	nvram(key, value) {
 		if (key) {
 			if (value === undefined)
-				return this.exec(`nvram get ${key}`).then(value => value.slice(0, -1));
+				return this.exec(`nvram get ${key}`);
 			else if (value === null)
 				return this.exec(`nvram set ${key}`);
 			else
@@ -104,18 +104,28 @@ export class Padavan {
 		});
 	};
 	getDevices() {
-		// cat /tmp/static_ip.inf
-		// cat /proc/net/arp
-		// arp -a
-		return this.router('device-map/clients.asp').then(res => res.text()).then(text => {
-			const ipmonitor = JSON.parse(text.match(new RegExp('^var ipmonitor = (.*?);$', 'm'))[1]);
-			const wireless = JSON.parse(text.match(new RegExp('^var wireless = (.*?);$', 'm'))[1]);
-			return ipmonitor.filter(device => device[5] !== '1').map(device => ({
-				name: device[2],
-				ip: device[0],
-				mac: device[1],
-				rssi: wireless[device[1]]
-			}));
+		return this.exec('arp -a').then(arp => {
+			return arp.split('\n').reduce((res, line) => {
+				const parts = line.match(/^(\S+)\s+\(([\d.]+)\)\s+at\s+([a-fA-F0-9:]+)\s+\[ether\](?:\s+(\S+))?\s+on\s+(\S+)/);
+				if (parts) {
+					if (parts[1] === '?')
+						parts[1] = null;
+					res[parts[3].toUpperCase()] = [ parts[1], parts[5] ];
+				}
+				return res;
+			}, {});
+		}).then(arp => {
+			return this.router('device-map/clients.asp').then(res => res.text()).then(text => {
+				const ipmonitor = JSON.parse(text.match(new RegExp('^var ipmonitor = (.*?);$', 'm'))[1]);
+				const wireless = JSON.parse(text.match(new RegExp('^var wireless = (.*?);$', 'm'))[1]);
+				return ipmonitor.filter(device => device[5] !== '1').map(device => ({
+					hostname: arp[device[1]]?.[0] || device[2],
+					ip: device[0],
+					mac: device[1],
+					rssi: wireless[device[1]],
+					interface: arp[device[1]]?.[1]
+				}));
+			});
 		});
 	};
 	router(path, body, method) {
