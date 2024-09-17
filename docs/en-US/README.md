@@ -4,9 +4,9 @@
 [![commit](https://img.shields.io/github/last-commit/alex2844/node-padavan.svg)](https://github.com/alex2844/node-padavan)
 [![engine](https://img.shields.io/badge/Node--RED-contrib--padavan-red.svg)](node-red/README.md)
 [![ru](https://img.shields.io/badge/lang-ru-white)](../ru/README.md)
-[![en](https://img.shields.io/badge/lang-en-white)](README.md)
+[![en](https://img.shields.io/badge/lang-en-green)](README.md)
 
-Control your router with Padavan firmware
+Router management with Padavan firmware
 
 
 ## Install
@@ -49,7 +49,7 @@ await client.getLog();
 ### Get device list
 ```javascript
 await client.getDevices();
-// [{ hostname, ip, mac, rssi, interface }]
+// [{ hostname, ip, mac, rssi }]
 ```
 
 ### Get parameters

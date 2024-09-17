@@ -1,9 +1,9 @@
-# Устройства
+# Devices
 
-Получить список устройств
+Get the list of connected devices
 
 
-### Выводит
+### Output
 
 | msg                   | type
 | ---                   | ---

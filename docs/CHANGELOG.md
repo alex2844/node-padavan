@@ -10,7 +10,14 @@
 | Security      | Security in case of vulnerabilities           | Безопасность в случае уязвимостей
 
 
-## [Unreleased](../../../compare/0.0.1...HEAD)
+## [Unreleased](../../../compare/1.0.0...HEAD)
+
+## [1.0.0](../../../releases/tag/0.0.1) - 2028-09-17
+### Added
+- Документация
+### Fixed
+- getDevices: отображать hostnames
+- msg.topic
 
 ## [0.0.1](../../../releases/tag/0.0.1) - 2028-09-07
 ### Added

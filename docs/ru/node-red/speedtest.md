@@ -11,6 +11,7 @@
 | `history`     | Результат с датой и timestamp
 | `progress`    | Запуск и окончание теста
 
+
 | result.msg    | type      | Значение
 | ---           | ---       | ---
 | `topic`       | string    | NetworkControl

@@ -110,7 +110,7 @@ export class Padavan {
 				if (parts) {
 					if (parts[1] === '?')
 						parts[1] = null;
-					res[parts[3].toUpperCase()] = [ parts[1], parts[5] ];
+					res[parts[3].toUpperCase()] = parts[1];
 				}
 				return res;
 			}, {});
@@ -119,11 +119,10 @@ export class Padavan {
 				const ipmonitor = JSON.parse(text.match(new RegExp('^var ipmonitor = (.*?);$', 'm'))[1]);
 				const wireless = JSON.parse(text.match(new RegExp('^var wireless = (.*?);$', 'm'))[1]);
 				return ipmonitor.filter(device => device[5] !== '1').map(device => ({
-					hostname: arp[device[1]]?.[0] || device[2],
+					hostname: arp[device[1]] || device[2],
 					ip: device[0],
 					mac: device[1],
-					rssi: wireless[device[1]],
-					interface: arp[device[1]]?.[1]
+					rssi: wireless[device[1]]
 				}));
 			});
 		});
