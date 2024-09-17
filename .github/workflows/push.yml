@@ -1,0 +1,58 @@
+name: Publish
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'package.json'
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      changed: ${{ steps.changed.outputs.result }}
+      exists: ${{ steps.exists.outputs.result }}
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/github-script@master
+        id: changed
+        with:
+          script: return (await import(`${{ github.workspace }}/.github/scripts/release.mjs`)).default(github, context);
+      - id: exists
+        if: ${{ env.NODE_AUTH_TOKEN != '' }}
+        run: echo "result=true" >> $GITHUB_OUTPUT
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  node-js:
+    needs: release
+    if: ${{ needs.release.outputs.exists == 'true' && needs.release.outputs.changed == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-node@master
+        with:
+          node-version: ${{ matrix.node }}
+          registry-url: 'https://registry.npmjs.org'
+      - run: npm install
+      - run: node .github/scripts/docs.mjs node-js
+      - run: node .github/scripts/pkg.mjs node-js
+      - run: npm publish --access=public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  node-red:
+    needs: release
+    if: ${{ needs.release.outputs.exists == 'true' && needs.release.outputs.changed == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-node@master
+        with:
+          node-version: ${{ matrix.node }}
+          registry-url: 'https://registry.npmjs.org'
+      - run: npm install
+      - run: node .github/scripts/docs.mjs node-red
+      - run: node .github/scripts/pkg.mjs node-red
+      - run: npm publish --access=public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
