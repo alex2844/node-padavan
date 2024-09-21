@@ -1,6 +1,6 @@
 {
 	"name": "node-padavan",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "Router management with Padavan firmware",
 	"main": "main.mjs",
 	"node-red": {

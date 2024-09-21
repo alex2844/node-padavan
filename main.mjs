@@ -246,7 +246,8 @@ export class Padavan {
 		if (!id)
 			id = (await this.getArtifact())?.id;
 		return this.github(`actions/artifacts/${id}/zip`).then(res => res.arrayBuffer()).then(jszip.loadAsync).then(zip => {
-			const [ firmware, config ] = Object.values(zip.files);
+			const regexp = new RegExp('(bin|trx)$');
+			const firmware = Object.values(zip.files).find(file => regexp.test(file.name));
 			return firmware.async('blob').then(blob => {
 				const data = new FormData();
 				data.append('file', blob, firmware.name);
