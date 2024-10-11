@@ -202,12 +202,12 @@ export class Padavan {
 		if (to_id.length > 7)
 			to_id = to_id.slice(0, 7);
 		if (from_id != to_id)
-			return this.github('contents/variables', undefined, undefined, {
+			return this.github('contents/build.conf', undefined, undefined, {
 				accept: 'application/vnd.github.raw+json'
 			}).then(res => res.text()).then(text => {
 				let [ padavan_repo ] = text.match(new RegExp('^PADAVAN_REPO="(.*?)"$', 'm'))?.slice(1) || [];
 				if (!padavan_repo)
-					throw new Error('PADAVAN_REPO not found in variables');
+					throw new Error('PADAVAN_REPO not found in build.conf');
 				const firstSlashIndex = padavan_repo.indexOf('/', padavan_repo.indexOf('//') + 2);
 				const host = padavan_repo.substring(padavan_repo.indexOf('//') + 2, firstSlashIndex);
 				if (host !== 'gitlab.com')
