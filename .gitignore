@@ -1,3 +1,7 @@
-/node_modules/
-/nodes/locales/*/*.html
-/README.md
+node_modules
+docs_apply.sh
+dist
+.env
+.cred.json
+.dev
+*.tgz

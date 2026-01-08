@@ -1,0 +1,45 @@
+{
+	"name": "padavan",
+	"version": "0.0.0",
+	"private": false,
+	"type": "module",
+	"description": "",
+	"exports": {
+		".": "./src/index.js",
+		"./*": "./src/*"
+	},
+	"bin": {
+		"padavan": "./bin/cli.js"
+	},
+	"scripts": {
+		"test": "tsc -p ./jsconfig.json"
+	},
+	"files": [
+		"./bin/",
+		"./src/*.js"
+	],
+	"dependencies": {
+		"jszip": "^3.10.1",
+		"yargs": "^18.0.0"
+	},
+	"engines": {
+		"node": ">=18.0.0"
+	},
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/alex2844/node-padavan.git",
+		"directory": "packages/node"
+	},
+	"keywords": [
+		"router",
+		"padavan",
+		"nodejs",
+		"iot",
+		"smarthome",
+		"home-automation",
+		"javascript",
+		"library",
+		"api"
+	]
+}

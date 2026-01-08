@@ -1,0 +1,26 @@
+{
+	"compilerOptions": {
+		"checkJs": true,
+		"allowJs": true,
+		"noEmit": true,
+		"noImplicitAny": false,
+		"resolveJsonModule": true,
+		"maxNodeModuleJsDepth": 0,
+		"target": "ESNext",
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		"paths": {
+			"padavan": ["packages/node/src/index.js"],
+			"padavan/*": ["packages/node/src/*"],
+			"node-red-contrib-padavan/*": ["packages/node-red/nodes/*"]
+		},
+		"baseUrl": "."
+	},
+	"include": [
+		"./scripts/",
+		"./packages/*/src/**/*.js",
+		"./packages/*/bin/**/*.js",
+		"./packages/*/build.js"
+	],
+	"exclude": ["node_modules"]
+}
