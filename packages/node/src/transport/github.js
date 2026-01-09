@@ -218,4 +218,53 @@ export default class GitHubClient {
 		const { commits } = await this.request(apiUrl);
 		return commits.map((/** @type {any} */ c) => c.commit.message);
 	};
+
+	/**
+	 * Получает метаданные репозитория (нужно, чтобы найти parent/source при поиске).
+	 * @param {string} [repoName] Имя репозитория (owner/repo). Если null - берется из конфига.
+	 * @returns {Promise<any>}
+	 */
+	async getRepoInfo(repoName) {
+		const target = repoName || this.#config.repo;
+		if (!target)
+			return null;
+		return this.request(target.startsWith('http') ? target : `https://api.github.com/repos/${target}`);
+	};
+
+	/**
+	 * Рекурсивно получает список всех форков.
+	 * @param {string} repoUrl URL API репозитория.
+	 * @param {string} repoUrl API URL для получения форков.
+	 * @param {any[]} [currentList=[]] Аккумулятор результатов.
+	 * @param {number} [page=1] Текущая страница.
+	 * @returns {Promise<any[]>} Список форков.
+	 */
+	async getForks(repoUrl, currentList = [], page = 1) {
+		const url = `${repoUrl}/forks?per_page=100&page=${page}&sort=stargazers`;
+		try {
+			const forks = await this.request(url);
+			if (!Array.isArray(forks) || forks.length === 0)
+				return currentList;
+			const newList = currentList.concat(forks);
+			if (forks.length === 100 && page < 5)
+				return this.getForks(repoUrl, newList, page + 1);
+			return newList;
+		} catch (e) {
+			return currentList;
+		}
+	};
+
+	/**
+	 * Получает список артефактов для конкретного репозитория.
+	 * @param {string} repoFullName Полное имя репозитория (owner/repo).
+	 * @returns {Promise<any[]>} Список артефактов.
+	 */
+	async getRepoArtifacts(repoFullName) {
+		try {
+			const { artifacts } = await this.request(`https://api.github.com/repos/${repoFullName}/actions/artifacts?per_page=20`);
+			return artifacts || [];
+		} catch (e) {
+			return [];
+		}
+	};
 };

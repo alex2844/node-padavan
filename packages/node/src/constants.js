@@ -1,3 +1,6 @@
+/** Идентификатор библиотеки для debuglog. */
+export const LIB_ID = 'padavan';
+
 /**
  * Уровни логирования.
  * @enum {number}
@@ -13,8 +16,8 @@ export const LOG_LEVELS = /** @type {const} */ ({
 /** Уровень логирования по умолчанию. */
 export const DEFAULT_LOG_LEVEL = 'none';
 
-/** Идентификатор библиотеки для debuglog. */
-export const LIB_ID = 'padavan';
+/** Репозиторий с прошивками по умолчанию. */
+export const DEFAULT_FIRMWARE_REPO = 'alex2844/node-padavan';
 
 /** Конфигурация HTTP клиента по умолчанию. */
 export const DEFAULT_HTTP_CONFIG = {

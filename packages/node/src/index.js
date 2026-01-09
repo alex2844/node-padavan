@@ -612,4 +612,63 @@ export default class Padavan {
 		this.log('error', 'Firmware upload failed. Router response did not contain success marker.');
 		throw new Error('Firmware upload failed');
 	};
+
+	/**
+	 * Ищет прошивки для текущей (или указанной) модели в сети форков GitHub.
+	 * @param {string} [modelName] Название модели. Если нет - берется из NVRAM.
+	 * @returns {Promise<any[]>}
+	 */
+	async findFirmware(modelName) {
+		if (!modelName) {
+			this.log('debug', 'Model name not provided, fetching from NVRAM...');
+			try {
+				modelName = /** @type {string} */ (await this.getParams('productid'));
+			} catch (e) {
+				throw new Error('Connect to router failed. Please specify --model manually.');
+			}
+		}
+		if (!modelName)
+			throw new Error('Could not determine router model');
+
+		let startRepo = this.config.credentials?.repo;
+		if (!startRepo)
+			throw new Error('Repo not specified via --repo and not found in config');
+
+		this.log('info', `Searching firmware for ${modelName} starting from ${startRepo}...`);
+
+		const repoInfo = await this.#github.getRepoInfo(startRepo);
+		const sourceRepo = repoInfo.source ? repoInfo.source.full_name : (repoInfo.full_name || startRepo);
+		this.log('debug', `Source repository identified as: ${sourceRepo}`);
+
+		const forks = await this.#github.getForks(`https://api.github.com/repos/${sourceRepo}`);
+		forks.unshift({ full_name: sourceRepo });
+		this.log('info', `Found ${forks.length} repositories. Scanning artifacts...`);
+
+		const results = [];
+		const chunkSize = 5;
+		for (let i = 0; i < forks.length; i += chunkSize) {
+			const chunk = forks.slice(i, i + chunkSize);
+			await Promise.all(chunk.map(async (fork) => {
+				const artifacts = await this.#github.getRepoArtifacts(fork.full_name);
+				const matched = artifacts.filter(a => !a.expired && a.name.toLowerCase().includes(modelName.toLowerCase()));
+				const uniqueByBranch = {};
+				matched.forEach(a => {
+					const branch = a.workflow_run?.head_branch || 'unknown';
+					if (!uniqueByBranch[branch])
+						uniqueByBranch[branch] = a;
+				});
+				Object.values(uniqueByBranch).forEach((/** @type {any} */ art) => {
+					results.push({
+						repo: fork.full_name,
+						branch: art.workflow_run?.head_branch,
+						name: art.name,
+						created_at: art.created_at,
+						size: art.size_in_bytes,
+						active: !art.expired
+					});
+				});
+			}));
+		}
+		return results.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+	};
 };
