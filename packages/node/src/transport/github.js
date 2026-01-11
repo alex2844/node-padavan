@@ -23,7 +23,10 @@ export default class GitHubClient {
 	 * @param {function(string, ...any): void} logger
 	 */
 	constructor(config, logger) {
-		this.#config = config;
+		this.#config = {
+			branch: 'main',
+			...config
+		};
 		this.#logger = logger;
 	};
 
@@ -101,8 +104,6 @@ export default class GitHubClient {
 	async startBuild(workflowName = 'build.yml') {
 		const workflowId = await this.#getWorkflowId(workflowName);
 		const { branch } = this.#config;
-		if (!branch)
-			throw new Error('Branch is not configured');
 		await this.request(`actions/workflows/${workflowId}/dispatches`, {
 			method: 'POST',
 			body: JSON.stringify({ ref: branch })
@@ -118,9 +119,7 @@ export default class GitHubClient {
 		const { branch } = this.#config;
 		const workflowId = await this.#getWorkflowId(workflowName);
 
-		let runsUrl = `actions/workflows/${workflowId}/runs?status=success&per_page=1`;
-		if (branch)
-			runsUrl += `&branch=${branch}`;
+		let runsUrl = `actions/workflows/${workflowId}/runs?status=success&per_page=1&branch=${branch}`;
 
 		const { workflow_runs } = await this.request(runsUrl);
 		const run = workflow_runs[0];

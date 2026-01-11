@@ -5,6 +5,7 @@ import { hideBin } from 'yargs/helpers';
 import Padavan from '../src/index.js';
 import { DEFAULT_HTTP_CONFIG, DEFAULT_FIRMWARE_REPO } from '../src/constants.js';
 /** @import { ArgumentsCamelCase } from 'yargs' */
+/** @import { Device, WifiNetwork, ChannelAnalysis } from '../src/index.js' */
 
 /**
  * @typedef {Object} CommonArgs
@@ -98,7 +99,13 @@ cli.command('status', 'Get system status', {}, async (/** @type {ArgumentsCamelC
 cli.command('devices', 'List connected devices', {}, async (/** @type {ArgumentsCamelCase<CommonArgs>} */ argv) => {
 	const client = getClient(argv);
 	const devices = await client.getDevices();
-	printOutput(argv, devices);
+	printOutput(argv, devices, (/** @type {Device} */ d) => ({
+		MAC: d.mac,
+		IP: d.ip,
+		HostName: d.hostname,
+		Type: d.type,
+		RSSI: d.rssi ? d.rssi + '%' : null
+	}));
 });
 
 cli.command('log', 'Get system log', {}, async (/** @type {ArgumentsCamelCase<CommonArgs>} */ argv) => {
@@ -129,26 +136,26 @@ cli.command('traffic', 'Get traffic history', {}, async (/** @type {ArgumentsCam
 // --- WIFI DOCTOR ---
 
 cli.command('scan [band]', 'Scan Wi-Fi networks', (yargs) => {
-	return yargs.positional('band', { choices: ['2.4', '5'], default: '2.4' });
+	return yargs.positional('band', { type: 'string', choices: ['2.4', '5'], default: '2.4' });
 }, async (/** @type {ArgumentsCamelCase<CommonArgs & {band: '2.4'|'5'}>} */ argv) => {
 	const client = getClient(argv);
 	logInfo(`Scanning ${argv.band}GHz networks...`);
 	const networks = await client.startScan(argv.band);
-	printOutput(argv, networks, n => ({
+	printOutput(argv, networks, (/** @type {WifiNetwork} */ n) => ({
 		SSID: n.ssid,
 		Channel: n.channel,
-		RSSI: n.rssi + '%',
+		Quality: n.quality + '%',
 		BSSID: n.bssid
 	}));
 });
 
 cli.command('doctor [band]', 'Analyze Wi-Fi environment and recommend channel', (yargs) => {
-	return yargs.positional('band', { choices: ['2.4', '5'], default: '2.4' });
+	return yargs.positional('band', { type: 'string', choices: ['2.4', '5'], default: '2.4' });
 }, async (/** @type {ArgumentsCamelCase<CommonArgs & {band: '2.4'|'5'}>} */ argv) => {
 	const client = getClient(argv);
 	logInfo(`Scanning and analyzing ${argv.band}GHz spectrum...`);
 	const result = await client.getBestChannel(argv.band);
-	printOutput(argv, result, r => ({
+	printOutput(argv, result, (/** @type {ChannelAnalysis} */ r) => ({
 		'Current': r.currentChannel,
 		'Best': r.bestChannel,
 		'Optimal?': r.isCurrentOptimal ? 'Yes' : 'No',

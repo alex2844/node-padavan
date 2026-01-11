@@ -3,7 +3,7 @@
 	"version": "0.0.0",
 	"private": false,
 	"type": "module",
-	"description": "",
+	"description": "The core library for interacting with routers running Padavan firmware. Provides a programmatic API for local control via HTTP.",
 	"exports": {
 		".": "./src/index.js",
 		"./*": "./src/*"

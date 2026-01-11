@@ -23,6 +23,7 @@ import { LOG_LEVELS, DEFAULT_LOG_LEVEL, LIB_ID, PAGES, COMMANDS } from './consta
  * @property {string} ip IP-адрес устройства.
  * @property {string|null} hostname Имя хоста.
  * @property {'eth'|'wifi'|'2.4GHz'|'5GHz'} type Тип подключения.
+ * @property {number} rssi Уровень сигнала (качество в %).
  */
 
 /**
@@ -30,7 +31,7 @@ import { LOG_LEVELS, DEFAULT_LOG_LEVEL, LIB_ID, PAGES, COMMANDS } from './consta
  * @property {string} ssid Имя сети (SSID).
  * @property {string} bssid MAC-адрес точки доступа (BSSID).
  * @property {number} channel Номер канала.
- * @property {number} rssi Уровень сигнала (качество в %).
+ * @property {number} quality Качество сигнала.
  */
 
 /**
@@ -309,11 +310,12 @@ export default class Padavan {
 		const wirelessMacs = new Set(Object.keys(wirelessObj));
 
 		return ipmonitor.map((/** @type {string[]} */ item) => {
-			const ip = item[0];
-			const mac = item[1]?.toUpperCase();
-			const hostname = item[2];
-			if (!mac)
+			if (!item[1] || item[5] === '1')
 				return null;
+			const ip = item[0];
+			const mac = item[1].toUpperCase();
+			const hostname = item[2];
+			const rssi = wirelessObj[mac] || null;
 
 			let /** @type {Device['type']} */ type = 'eth';
 			if (wirelessMacs.has(mac) || macs2g.has(mac) || macs5g.has(mac)) {
@@ -324,9 +326,10 @@ export default class Padavan {
 				else
 					type = 'wifi';
 			}
-			return { mac, ip, hostname, type };
+			return { mac, ip, hostname, type, rssi };
 		}).filter(Boolean);
 	};
+
 
 	/**
 	 * Сканирование эфира.
@@ -351,12 +354,15 @@ export default class Padavan {
 			return [];
 		}
 
-		return rawList.map(item => ({
-			ssid: decodeURIComponent(item[0]),
-			bssid: item[1].toUpperCase(),
-			channel: parseInt(item[2], 10),
-			rssi: parseInt(item[3], 10)
-		})).filter(n => n.bssid && n.channel).sort((a, b) => b.rssi - a.rssi);
+		return rawList.map(item => {
+			const ssid = decodeURIComponent(item[0]);
+			const bssid = item[1].toUpperCase();
+			const channel = parseInt(item[2], 10);
+			const quality = parseInt(item[3], 10);
+			if (ssid === '???' || !quality || quality < 1 || !channel || !bssid)
+				return null;
+			return { ssid, bssid, channel, quality };
+		}).filter(Boolean).sort((a, b) => b.quality - a.quality);
 	};
 
 	/**
@@ -422,7 +428,7 @@ export default class Padavan {
 
 		const networks = scanResults || await this.startScan(band);
 		networks.forEach(net => {
-			const penalty = net.rssi;
+			const penalty = net.quality;
 			if (is24) {
 				for (let offset = -4; offset <= 4; offset++) {
 					const targetCh = net.channel + offset;
