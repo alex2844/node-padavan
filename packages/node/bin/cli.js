@@ -3,6 +3,7 @@
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import Padavan from '../src/index.js';
+import { formatBytes, formatUptime } from '../src/utils/formatting.js';
 import { DEFAULT_HTTP_CONFIG, DEFAULT_FIRMWARE_REPO } from '../src/constants.js';
 /** @import { ArgumentsCamelCase } from 'yargs' */
 /** @import { Device, WifiNetwork, ChannelAnalysis } from '../src/index.js' */
@@ -34,37 +35,16 @@ const logInfo = (/** @type {string} */ msg) => console.error(msg);
  * @param {(item: any) => any} [tableTransform]
  */
 const printOutput = (argv, data, tableTransform = null) => {
-	if (argv.json) {
-		console.log(JSON.stringify(data, null, 2));
-		return;
-	}
-	let outputData = data;
-	if (tableTransform) {
-		if (Array.isArray(data))
-			outputData = data.map(tableTransform);
-		else
-			outputData = tableTransform(data);
-	}
-	if (Array.isArray(outputData)) {
-		if (outputData.length === 0)
-			logInfo('No results found.');
-		else
-			console.table(outputData);
-	} else if (typeof outputData === 'object' && outputData !== null)
-		console.table(outputData);
-	else
-		console.log(outputData);
-};
-
-const formatBytes = (/** @type {number|string} */ bytes, decimals = 2) => {
-	const b = typeof bytes === 'string' ? parseInt(bytes, 10) : bytes;
-	if (b === 0 || isNaN(b))
-		return '0 B';
-	const k = 1024;
-	const dm = decimals < 0 ? 0 : decimals;
-	const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-	const i = Math.floor(Math.log(b) / Math.log(k));
-	return parseFloat((b / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+	if (argv.json)
+		return console.log(JSON.stringify(data, null, 2));
+	let output = data;
+	if (tableTransform)
+		output = Array.isArray(data) ? data.map(tableTransform) : tableTransform(data);
+	if (Array.isArray(output))
+		return output.length ? console.table(output) : logInfo('No results found.');
+	if (output && typeof output === 'object')
+		return Object.keys(output).length ? console.table(output) : logInfo('No results found.');
+	console.log(output);
 };
 
 const getClient = (/** @type {ArgumentsCamelCase<CommonArgs & Partial<FirmwareArgs>>} */ argv) => {
@@ -88,7 +68,7 @@ cli.command('status', 'Get system status', {}, async (/** @type {ArgumentsCamelC
 	const client = getClient(argv);
 	const status = await client.getStatus();
 	printOutput(argv, status, (s) => ({
-		'Uptime': `${s.uptime.days}d ${s.uptime.hours}h ${s.uptime.minutes}m`,
+		'Uptime': formatUptime(s.uptime),
 		'Load Avg': s.lavg,
 		'RAM Free': formatBytes(s.ram.free * 1024),
 		'RAM Used': formatBytes(s.ram.used * 1024),
@@ -165,17 +145,22 @@ cli.command('doctor [band]', 'Analyze Wi-Fi environment and recommend channel', 
 
 // --- PARAMS (NVRAM) ---
 
-cli.command('params [keys..]', 'Get NVRAM parameters', {}, async (/** @type {ArgumentsCamelCase<CommonArgs & {keys?: string[]}>} */ argv) => {
+cli.command('params [keys..]', 'Get parameters (NVRAM or Page inputs)', (yargs) => {
+	return yargs
+		.option('page', { type: 'string', describe: 'Target ASP page to parse inputs from' });
+}, async (/** @type {ArgumentsCamelCase<CommonArgs & {keys?: string[], page?: string}>} */ argv) => {
 	const client = getClient(argv);
-	const params = await client.getParams(argv.keys);
+	const params = await client.getParams(argv.keys, argv.page);
 	printOutput(argv, params);
 });
 
-cli.command('set <pairs..>', 'Set NVRAM parameters (key=value)', (yargs) => {
+cli.command('set <pairs..>', 'Set parameters (key=value)', (yargs) => {
 	return yargs
-		.option('sid', { type: 'string', describe: 'Service ID to apply changes (e.g. WLANConfig11b;)' })
-		.example('$0 set rt_ssid=MyWifi rt_channel=6 --sid "WLANConfig11b;"', 'Change Wi-Fi settings');
-}, async (/** @type {ArgumentsCamelCase<CommonArgs & {pairs: string[], sid?: string}>} */ argv) => {
+		.option('sid', { type: 'string', describe: 'Service ID list' })
+		.option('page', { type: 'string', describe: 'Current page' })
+		.option('action', { type: 'string', describe: 'Action mode', default: ' Apply ' })
+		.example('$0 set rt_ssid=MyWifi --page "Advanced_WAdvanced_Content.asp"', 'Apply settings via Web UI emulation');
+}, async (/** @type {ArgumentsCamelCase<CommonArgs & {pairs: string[], sid?: string, page?: string, action?: string}>} */ argv) => {
 	const client = getClient(argv);
 	const /** @type {Record<string, string>} */ params = {};
 	argv.pairs.forEach(p => {
@@ -183,7 +168,11 @@ cli.command('set <pairs..>', 'Set NVRAM parameters (key=value)', (yargs) => {
 		if (k)
 			params[k] = v.join('=');
 	});
-	await client.setParams(params, { sid_list: argv.sid });
+	await client.setParams(params, {
+		sid_list: argv.sid,
+		current_page: argv.page,
+		action_mode: /** @type {' Apply '|' Restart '} */ (argv.action)
+	});
 	logInfo('Settings applied successfully.');
 });
 

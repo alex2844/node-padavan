@@ -48,7 +48,7 @@ import { LOG_LEVELS, DEFAULT_LOG_LEVEL, LIB_ID, PAGES, COMMANDS } from './consta
  * @typedef {Object} SetParamsOptions
  * @property {string} [current_page] Текущая страница (для эмуляции поведения браузера).
  * @property {string} [next_page] Следующая страница (для редиректа).
- * @property {string} [sid_list] Список сервисов для перезапуска (например 'WLANConfig11b;'). Если не указан, библиотека попытается найти его на странице `current_page`.
+ * @property {string} [sid_list] Список сервисов для перезапуска (например 'WLANConfig11b;').
  * @property {string} [group_id] ID группы (требуется для некоторых списков).
  * @property {' Apply '|' Restart '} [action_mode=' Apply '] Режим действия.
  */
@@ -329,7 +329,6 @@ export default class Padavan {
 			return { mac, ip, hostname, type, rssi };
 		}).filter(Boolean);
 	};
-
 
 	/**
 	 * Сканирование эфира.
