@@ -4,7 +4,8 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import Padavan from '../src/index.js';
 import { formatBytes, formatUptime } from '../src/utils/formatting.js';
-import { DEFAULT_HTTP_CONFIG, DEFAULT_FIRMWARE_REPO } from '../src/constants.js';
+import { DEFAULT_HTTP_CONFIG, DEFAULT_FIRMWARE_REPO, ACTION_MODE, SERVICE_ID, GROUP_ID } from '../src/constants.js';
+/** @import { ActionMode, ServiceId, GroupId } from '../src/constants.js' */
 /** @import { ArgumentsCamelCase } from 'yargs' */
 /** @import { Device, WifiNetwork, ChannelAnalysis } from '../src/index.js' */
 
@@ -156,11 +157,24 @@ cli.command('params [keys..]', 'Get parameters (NVRAM or Page inputs)', (yargs) 
 
 cli.command('set <pairs..>', 'Set parameters (key=value)', (yargs) => {
 	return yargs
-		.option('sid', { type: 'string', describe: 'Service ID list' })
-		.option('page', { type: 'string', describe: 'Current page' })
-		.option('action', { type: 'string', describe: 'Action mode', default: ' Apply ' })
-		.example('$0 set rt_ssid=MyWifi --page "Advanced_WAdvanced_Content.asp"', 'Apply settings via Web UI emulation');
-}, async (/** @type {ArgumentsCamelCase<CommonArgs & {pairs: string[], sid?: string, page?: string, action?: string}>} */ argv) => {
+		.option('page', { type: 'string', describe: 'Current page (for auto-SID detection)' })
+		.option('sid', { type: 'array', describe: 'Service ID list', choices: SERVICE_ID })
+		.option('group', { type: 'string', describe: 'Group ID (required for Add/Del actions)', choices: GROUP_ID })
+		.option('script', { type: 'string', describe: 'Action script' })
+		.option('action', {
+			type: 'string',
+			describe: 'Action mode',
+			default: 'Apply',
+			coerce: (arg) => {
+				const clean = arg.trim();
+				const match = ACTION_MODE.map(m => m.trim()).find(m => m.toLowerCase() === clean.toLowerCase());
+				return match || arg;
+			},
+			choices: ACTION_MODE.map(m => m.trim())
+		})
+		.example('$0 set rt_ssid=MyWifi --page "Advanced_WAdvanced_Content.asp"', 'Apply settings via Web UI')
+		.example('$0 set "rt_ACLList=AA:BB:CC:DD:EE:FF" --action Add --group rt_ACLList', 'Add MAC to filter');
+}, async (/** @type {ArgumentsCamelCase<CommonArgs & {pairs: string[], sid?: string|ServiceId[], page?: string, action?: ActionMode, group?: GroupId, script?: string}>} */ argv) => {
 	const client = getClient(argv);
 	const /** @type {Record<string, string>} */ params = {};
 	argv.pairs.forEach(p => {
@@ -168,10 +182,13 @@ cli.command('set <pairs..>', 'Set parameters (key=value)', (yargs) => {
 		if (k)
 			params[k] = v.join('=');
 	});
+	const action_mode = ACTION_MODE.find(m => m.trim() === argv.action) || argv.action;
 	await client.setParams(params, {
+		action_mode,
+		action_script: argv.script,
 		sid_list: argv.sid,
-		current_page: argv.page,
-		action_mode: /** @type {' Apply '|' Restart '} */ (argv.action)
+		group_id: argv.group,
+		current_page: argv.page
 	});
 	logInfo('Settings applied successfully.');
 });
