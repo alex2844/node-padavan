@@ -7,6 +7,7 @@ import {
 	extractJsVariable, extractTextareaValue, extractMacsFromTextarea, extractCurrentChannel
 } from './utils/parsers.js';
 import { LOG_LEVELS, DEFAULT_LOG_LEVEL, LIB_ID, PAGES, COMMANDS } from './constants.js';
+/** @import { ActionMode, ServiceId, GroupId } from './constants.js' */
 /** @import { Config as HttpConfig } from './transport/http.js' */
 /** @import { Config as GithubConfig } from './transport/github.js' */
 /** @typedef {HttpConfig & GithubConfig} Credentials */
@@ -46,11 +47,12 @@ import { LOG_LEVELS, DEFAULT_LOG_LEVEL, LIB_ID, PAGES, COMMANDS } from './consta
 
 /**
  * @typedef {Object} SetParamsOptions
- * @property {string} [current_page] Текущая страница (для эмуляции поведения браузера).
- * @property {string} [next_page] Следующая страница (для редиректа).
- * @property {string} [sid_list] Список сервисов для перезапуска (например 'WLANConfig11b;').
- * @property {string} [group_id] ID группы (требуется для некоторых списков).
- * @property {' Apply '|' Restart '} [action_mode=' Apply '] Режим действия.
+ * @property {string} [current_page] Текущая страница.
+ * @property {string} [next_page] Страница перенаправления.
+ * @property {string|ServiceId[]} [sid_list] Строка или массив сервисов для перезапуска.
+ * @property {GroupId} [group_id] ID группы.
+ * @property {ActionMode} [action_mode=' Apply '] Режим действия.
+ * @property {string} [action_script] Имя скрипта.
  */
 
 /**
@@ -186,11 +188,12 @@ export default class Padavan {
 		const kvPairs = Object.entries(params);
 		if (kvPairs.length === 0)
 			return;
-
-		let sidList = options.sid_list;
 		const page = options.current_page || options.next_page;
 
-		if (!sidList && page) {
+		let sidList = options.sid_list;
+		if (Array.isArray(sidList))
+			sidList = sidList.join(';') + ';';
+		else if (!sidList && page) {
 			this.log('debug', `sid_list not provided, searching on ${page}...`);
 			try {
 				const html = await this.#http.get(page);
@@ -209,6 +212,7 @@ export default class Padavan {
 		if (sidList) {
 			const data = {
 				action_mode: options.action_mode || ' Apply ',
+				action_script: options.action_script || '',
 				sid_list: sidList,
 				group_id: options.group_id || '',
 				current_page: page || 'index.asp',
