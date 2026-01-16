@@ -1,0 +1,11 @@
+{
+	"devices": {
+		"label": {
+			"settings": "Config",
+			"name": "Name"
+		},
+		"placeholder": {
+			"name": "Devices"
+		}
+	}
+}

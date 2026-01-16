@@ -5,7 +5,7 @@
 	"type": "module",
 	"description": "Router management with Padavan firmware",
 	"scripts": {
-		"test": "tsc -p ./jsconfig.json",
+		"test": "bun --filter=* run test",
 		"build": "bun --filter=* run build",
 		"clean": "rm -rf ./packages/*/dist",
 		"publish": "./scripts/publish.sh",

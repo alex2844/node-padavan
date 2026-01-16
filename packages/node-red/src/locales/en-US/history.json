@@ -1,0 +1,11 @@
+{
+	"history": {
+		"label": {
+			"settings": "Config",
+			"name": "Name"
+		},
+		"placeholder": {
+			"name": "History"
+		}
+	}
+}

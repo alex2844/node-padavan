@@ -1,0 +1,22 @@
+{
+	"config": {
+		"label": {
+			"name": "Name",
+			"debug": "Enable debug",
+			"github": "Github",
+			"repo": "Repo",
+			"branch": "Branch",
+			"token": "Token",
+			"router": "Router",
+			"host": "Host",
+			"username": "Username",
+			"password": "Password"
+		},
+		"placeholder": {
+			"name": "e.g., My Router",
+			"repo": "owner/repository or GitHub URL",
+			"branch": "e.g., main",
+			"host": "e.g., 192.168.1.1"
+		}
+	}
+}

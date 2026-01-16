@@ -1,0 +1,57 @@
+{
+	"name": "node-red-contrib-padavan",
+	"version": "0.0.0",
+	"private": false,
+	"type": "module",
+	"description": "Node-RED nodes for managing routers with Padavan firmware.",
+	"scripts": {
+		"test": "tsc -p ./jsconfig.json",
+		"build": "bun ./build.js",
+		"start": "node-red --settings settings.cjs",
+		"dev": "nodemon --exec 'bun run build && bun run start' --watch ./package.json --watch ./src --watch ./docs -e js,json,html,md",
+		"prepublishOnly": "npm run build"
+	},
+	"files": [
+		"./dist/",
+		"./examples/"
+	],
+	"node-red": {
+		"version": ">=3.0.0",
+		"nodes": {
+			"config": "./dist/nodes/config.js",
+			"system": "./dist/nodes/system.js",
+			"devices": "./dist/nodes/devices.js",
+			"history": "./dist/nodes/history.js",
+			"params": "./dist/nodes/params.js",
+			"upgrade": "./dist/nodes/upgrade.js"
+		}
+	},
+	"dependencies": {
+		"padavan": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/bun": "^1.2.17",
+		"@types/node-red": "^1.3.5",
+		"node-red": "^4.0.9",
+		"nodemon": "^3.1.10"
+	},
+	"engines": {
+		"node": ">=18.0.0"
+	},
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/alex2844/node-padavan.git",
+		"directory": "packages/node-red"
+	},
+	"keywords": [
+		"node-red",
+		"padavan",
+		"router",
+		"firmware",
+		"iot",
+		"smarthome",
+		"home-automation",
+		"node-red-contrib"
+	]
+}

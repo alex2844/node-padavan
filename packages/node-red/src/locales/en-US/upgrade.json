@@ -1,0 +1,17 @@
+{
+	"upgrade": {
+		"label": {
+			"settings": "Config",
+			"name": "Name",
+			"topic": "Action"
+		},
+		"placeholder": {
+			"name": "Upgrade"
+		},
+		"action": {
+			"changelog": "Check Updates",
+			"build": "Build Firmware",
+			"upgrade": "Flash Firmware"
+		}
+	}
+}

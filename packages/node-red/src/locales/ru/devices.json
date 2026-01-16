@@ -1,0 +1,11 @@
+{
+	"devices": {
+		"label": {
+			"settings": "Конфигурация",
+			"name": "Имя"
+		},
+		"placeholder": {
+			"name": "Устройства"
+		}
+	}
+}

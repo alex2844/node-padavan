@@ -1,0 +1,26 @@
+{
+	"params": {
+		"label": {
+			"settings": "Config",
+			"name": "Name",
+			"topic": "Action",
+			"payload": "Payload",
+			"page": "ASP Page",
+			"sid": "Service IDs",
+			"group": "Group ID",
+			"script": "Action Script",
+			"action": "Action Mode"
+		},
+		"placeholder": {
+			"name": "Params",
+			"page": "e.g., Advanced_DHCP_Content.asp",
+			"sid": "e.g., WLANConfig11b",
+			"group": "e.g., ManualDHCPList"
+		},
+		"action": {
+			"list": "Get All (NVRAM)",
+			"get": "Get Specific",
+			"set": "Set Parameters"
+		}
+	}
+}

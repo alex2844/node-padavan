@@ -1,0 +1,20 @@
+{
+	"system": {
+		"label": {
+			"settings": "Config",
+			"name": "Name",
+			"topic": "Action",
+			"band": "Band"
+		},
+		"placeholder": {
+			"name": "System"
+		},
+		"action": {
+			"status": "Get Status",
+			"log": "Get Log",
+			"reboot": "Reboot",
+			"scan": "Scan Wi-Fi",
+			"doctor": "Wi-Fi Doctor"
+		}
+	}
+}

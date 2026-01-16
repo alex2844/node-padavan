@@ -1,0 +1,11 @@
+{
+	"history": {
+		"label": {
+			"settings": "Конфигурация",
+			"name": "Имя"
+		},
+		"placeholder": {
+			"name": "История"
+		}
+	}
+}
