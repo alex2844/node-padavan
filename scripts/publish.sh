@@ -11,19 +11,20 @@ trap cleanup EXIT
 
 function cleanup() {
 	echo
+	rm -f "${PACKAGES_DIR}"/*/*.tgz
 	if [[ ${#changed_files[@]} -eq 0 ]]; then
-		echo "🧹 Очистка не требуется, файлы не изменялись."
+		echo "🧹 Очистка не требуется."
 		return
 	fi
-	echo "🧹 Очистка: восстановление оригинальных версий в измененных файлах..."
+	echo "🧹 Очистка: восстановление версий в package.json..."
 	for i in "${!changed_files[@]}"; do
-		local file_path="${changed_files[$i]}"
-		local version="${original_versions[$i]}"
+		local file_path="${changed_files[${i}]}"
+		local version="${original_versions[${i}]}"
 		echo "   - Восстановление версии '${version}' в файле ${file_path}"
 		local json=$(jq --tab --arg version "${version}" '.version = $version' "${file_path}")
 		echo "${json}" >"${file_path}"
 	done
-	echo "✅ Оригинальные версии восстановлены."
+	echo "✅ Версии восстановлены."
 }
 
 function error() {
@@ -35,7 +36,7 @@ function check_deps() {
 	local missing_deps=0
 	for dep in jq bun curl; do
 		if ! command -v "${dep}" &>/dev/null; then
-			echo "❌ Утилита '${dep}' не найдена, но она необходима для работы скрипта." >&2
+			echo "❌ Утилита '${dep}' не найдена." >&2
 			missing_deps=1
 		fi
 	done
@@ -46,14 +47,14 @@ function check_deps() {
 
 function refresh_nodered_flow() {
 	local pkg_name="$1"
-	echo "   - 🟡 Это пакет Node-RED. Обновление на flows.nodered.org..."
+	echo "   - 🟡 Обновление на flows.nodered.org..."
 	local headers_file=$(mktemp)
 	local response_body=$(curl -s -D "${headers_file}" "${NODERED_FLOWS_URL}")
 	local cookie=$(grep -oP '_csrf=.*?;' "${headers_file}" | head -n 1 || true)
 	local csrf_token=$(echo "${response_body}" | grep -oP 'name="_csrf" type="hidden" value="\K[^"]+' || true)
 	rm -f "${headers_file}"
 	if [[ -z "${cookie}" ]] || [[ -z "${csrf_token}" ]]; then
-		echo "   - ⚠️ Не удалось получить CSRF-токен или cookie с сайта Node-RED. Обновление пропущено."
+		echo "   - ⚠️ Не удалось получить токены для Node-RED."
 		return
 	fi
 	local post_response=$(curl -sL -X POST \
@@ -63,9 +64,9 @@ function refresh_nodered_flow() {
 		"${NODERED_FLOWS_URL}"
 	)
 	if [[ "${post_response,,}" == *"added"* ]] || [[ "${post_response,,}" == *"updated"* ]]; then
-		echo "   - ✅ Обновление на Node-RED Flows завершено."
+		echo "   - ✅ Обновлено на Node-RED Flows."
 	else
-		echo "   - ⚠️ Не удалось обновить модуль в Node-RED. Ответ сервера не содержит подтверждения."
+		echo "   - ⚠️ Ошибка обновления Node-RED Flows."
 		echo "   - Ответ сервера: ${post_response}"
 	fi
 }
@@ -97,8 +98,8 @@ function main() {
 			local json=$(jq --tab --arg version "${target_version}" '.version = $version' "${pkg_file}")
 			echo "${json}" >"${pkg_file}"
 			[[ "${pkg_file}" == "package.json" ]] && continue;
-			changed_files+=("$pkg_file")
-			original_versions+=("$current_version")
+			changed_files+=("${pkg_file}")
+			original_versions+=("${current_version}")
 		fi
 		if [[ "$(jq -r '.private // false' "${pkg_file}")" != "true" ]]; then
 			packages_to_publish+=("$(dirname "${pkg_file}")")
@@ -131,7 +132,11 @@ function main() {
 				else
 					echo "   - 🚀 Обнаружена версия ${published_version}. Публикация новой версии ${target_version}..."
 				fi
-				(cd "${pkg_dir}" && bun publish)
+				# (cd "${pkg_dir}" && bun publish)
+				echo "   - 📦 Упаковка (bun pm pack)..."
+				(cd "${pkg_dir}" && bun pm pack)
+				echo "   - 🚀 Публикация архива через NPM..."
+				bunx npm publish "${pkg_dir}/${pkg_name}-${target_version}.tgz" --provenance
 				echo "   - ✅ Опубликован."
 				if jq -e '."node-red"' "${pkg_file}" >/dev/null; then
 					refresh_nodered_flow "${pkg_name}"
@@ -141,7 +146,7 @@ function main() {
 		done
 	fi
 
-	echo "🎉 Скрипт завершил работу."
+	echo "🎉 Готово."
 }
 
 main "$@"
