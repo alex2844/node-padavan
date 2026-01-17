@@ -3,13 +3,12 @@
 	"version": "2.0.0",
 	"private": true,
 	"type": "module",
-	"description": "Router management with Padavan firmware",
+	"description": "Control, monitor, and upgrade Padavan routers using Node.js and Node-RED.",
 	"scripts": {
 		"test": "bun --filter=* run test",
 		"build": "bun --filter=* run build",
 		"clean": "rm -rf ./packages/*/dist",
-		"publish": "./scripts/publish.sh",
-		"docs": "./scripts/docs.sh"
+		"publish": "./scripts/publish.sh"
 	},
 	"files": [],
 	"workspaces": [
