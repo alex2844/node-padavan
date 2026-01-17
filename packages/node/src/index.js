@@ -6,7 +6,7 @@ import {
 	parsePageInputs, parseNvramOutput, parseLooseJson, normalizeTrafficHistory,
 	extractJsVariable, extractTextareaValue, extractMacsFromTextarea, extractCurrentChannel
 } from './utils/parsers.js';
-import { LOG_LEVELS, DEFAULT_LOG_LEVEL, LIB_ID, PAGES, COMMANDS } from './constants.js';
+import { LOG_LEVELS, DEFAULT_LOG_LEVEL, LIB_ID, NVRAM_CACHE_TTL, PAGES, COMMANDS } from './constants.js';
 /** @import { ActionMode, ServiceId, GroupId } from './constants.js' */
 /** @import { Config as HttpConfig } from './transport/http.js' */
 /** @import { Config as GithubConfig } from './transport/github.js' */
@@ -90,6 +90,24 @@ export default class Padavan {
 	#github;
 
 	/**
+	 * Очередь для последовательного выполнения команд SystemCmd.
+	 * @type {Promise<any>}
+	 */
+	#commandQueue = Promise.resolve();
+	
+	/**
+	 * Кэшированный промис запроса NVRAM.
+	 * @type {Promise<Record<string, string>>|null}
+	 */
+	#nvramPromise = null;
+
+	/**
+	 * Время последнего запроса NVRAM.
+	 * @type {number}
+	 */
+	#nvramTimestamp = 0;
+
+	/**
 	 * Конфигурация для подключения.
 	 * @type {Config}
 	 */
@@ -128,20 +146,24 @@ export default class Padavan {
 	 * @returns {Promise<string>} Вывод команды (stdout + stderr).
 	 */
 	async exec(command) {
-		this.log('debug', `Executing command: ${command}`);
-		if (!this.#http)
-			throw new Error('HTTP client not initialized');
-		try {
-			await this.#http.post(PAGES.APPLY, {
-				action_mode: ' SystemCmd ',
-				SystemCmd: command
-			});
-			const response = await this.#http.get(PAGES.CONSOLE_RESPONSE);
-			return response.trim();
-		} catch (e) {
-			this.log('error', `Command execution failed: ${command}`, e);
-			throw e;
-		}
+		const result = this.#commandQueue.then(async () => {
+			this.log('debug', `Executing command: ${command}`);
+			if (!this.#http)
+				throw new Error('HTTP client not initialized');
+			try {
+				await this.#http.post(PAGES.APPLY, {
+					action_mode: ' SystemCmd ',
+					SystemCmd: command
+				});
+				const response = await this.#http.get(PAGES.CONSOLE_RESPONSE);
+				return response.trim();
+			} catch (e) {
+				this.log('error', `Command execution failed: ${command}`, e);
+				throw e;
+			}
+		});
+		this.#commandQueue = result.catch(() => {});
+		return result;
 	};
 
 	/**
@@ -158,9 +180,19 @@ export default class Padavan {
 			const html = await this.#http.get(page);
 			allParams = parsePageInputs(html);
 		} else {
-			this.log('debug', 'Fetching params via NVRAM...');
-			const output = await this.exec(COMMANDS.NVRAM_SHOW);
-			allParams = parseNvramOutput(output);
+			const now = Date.now();
+			if (this.#nvramPromise && ((now - this.#nvramTimestamp) < NVRAM_CACHE_TTL)) {
+				this.log('debug', 'Using cached NVRAM data');
+				allParams = await this.#nvramPromise;
+			} else {
+				this.log('debug', 'Fetching params via NVRAM...');
+				this.#nvramTimestamp = now;
+				this.#nvramPromise = this.exec(COMMANDS.NVRAM_SHOW).then(parseNvramOutput);
+				this.#nvramPromise.catch(() => {
+					this.#nvramPromise = null;
+				});
+				allParams = await this.#nvramPromise;
+			}
 		}
 		if (!keys)
 			return allParams;
@@ -209,6 +241,9 @@ export default class Padavan {
 		}
 
 		this.log('info', `Setting params: ${Object.keys(params).join(', ')}`);
+		this.#nvramPromise = null;
+		this.#nvramTimestamp = 0;
+
 		if (sidList) {
 			const data = {
 				action_mode: options.action_mode || ' Apply ',
@@ -561,6 +596,11 @@ export default class Padavan {
 			const artifact = await this.#github.getLatestArtifact();
 			const toIdMatch = artifact.name.match(/-([0-9a-f]{7,})$/);
 			const toId = toIdMatch ? toIdMatch[1]?.substring(0, 7) : null;
+			console.log({
+				currentFirmware, fromId,
+				artifact,
+				toIdMatch, toId
+			});
 
 			if (!fromId || !toId)
 				throw new Error(`Could not determine firmware versions (current: ${fromId}, latest: ${toId})`);

@@ -27,6 +27,9 @@ export const DEFAULT_HTTP_CONFIG = {
 	password: 'admin'
 };
 
+/** Время жизни кэша NVRAM в миллисекундах. */
+export const NVRAM_CACHE_TTL = 3_000;
+
 /**
  * Режимы действия для apply.cgi.
  * Обратите внимание: большинство команд требуют пробелы по краям.
