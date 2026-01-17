@@ -32,6 +32,19 @@ async function dirExists(dirPath) {
 };
 
 /**
+ * Подготавливает Markdown для отображения в панели справки Node-RED.
+ * 1. Удаляет заголовок H1 (так как Node-RED показывает имя узла сам).
+ * 2. Сдвигает уровни заголовков (## -> ###), чтобы соответствовать стилю панели.
+ * @param {string} markdown Исходный текст.
+ * @returns {string} Обработанный текст.
+ */
+function transformMarkdownForNodeRed(markdown) {
+	let content = markdown.replace(/^\s*#\s+.+(\r?\n|$)/, '');
+	content = content.replace(/^(#{2,})/gm, '#$1');
+	return content.trim();
+};
+
+/**
  * Выполняет сборку одного узла Node-RED по его имени.
  * @param {string} nodeName - Имя узла (совпадает с именем директории в `src/nodes`).
  * @returns {Promise<void>}
@@ -110,6 +123,7 @@ async function buildNode(nodeName) {
 
 /**
  * Находит и копирует файлы документации (.md) для всех узлов.
+ * При копировании трансформирует Markdown для Node-RED.
  * @param {string[]} nodeNames - Список имен всех собираемых узлов.
  * @returns {Promise<void>}
  */
@@ -128,8 +142,9 @@ async function copyAllDocs(nodeNames) {
 			if (await Bun.file(docSrc).exists()) {
 				await mkdir(localeDistDir, { recursive: true });
 				const dest = path.join(localeDistDir, `${nodeName}.html`);
-				const content = await Bun.file(docSrc).text();
-				await Bun.write(dest, `<script type="text/markdown" data-help-name="${nodePrefix}-${nodeName}" data-lang="${lang}">\n${content}</script>`);
+				const rawContent = await Bun.file(docSrc).text();
+				const content = transformMarkdownForNodeRed(rawContent);
+				await Bun.write(dest, `<script type="text/markdown" data-help-name="${nodePrefix}-${nodeName}" data-lang="${lang}">\n${content}\n</script>`);
 				copied = true;
 			}
 		}
