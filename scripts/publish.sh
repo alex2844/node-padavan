@@ -63,7 +63,7 @@ function refresh_nodered_flow() {
 		--data-urlencode "module=${pkg_name}" \
 		"${NODERED_FLOWS_URL}"
 	)
-	if [[ "${post_response,,}" == *"added"* ]] || [[ "${post_response,,}" == *"updated"* ]]; then
+	if [[ "${post_response,,}" == *"added"* ]] || [[ "${post_response,,}" == *"updated"* ]] || [[ "${post_response}" == *"/node/"* ]]; then
 		echo "   - ✅ Обновлено на Node-RED Flows."
 	else
 		echo "   - ⚠️ Ошибка обновления Node-RED Flows."

@@ -94,7 +94,7 @@ export default class Padavan {
 	 * @type {Promise<any>}
 	 */
 	#commandQueue = Promise.resolve();
-	
+
 	/**
 	 * Кэшированный промис запроса NVRAM.
 	 * @type {Promise<Record<string, string>>|null}
@@ -596,11 +596,6 @@ export default class Padavan {
 			const artifact = await this.#github.getLatestArtifact();
 			const toIdMatch = artifact.name.match(/-([0-9a-f]{7,})$/);
 			const toId = toIdMatch ? toIdMatch[1]?.substring(0, 7) : null;
-			console.log({
-				currentFirmware, fromId,
-				artifact,
-				toIdMatch, toId
-			});
 
 			if (!fromId || !toId)
 				throw new Error(`Could not determine firmware versions (current: ${fromId}, latest: ${toId})`);
