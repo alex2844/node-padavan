@@ -71,6 +71,8 @@ export class ParamsNode {
 					throw new Error(`Invalid topic: "${topic}". Must be 'list', 'get', or 'set'.`);
 			}
 			if (result) {
+				if (!msg.topic)
+					msg.topic = topic;
 				msg.payload = result;
 				send(msg);
 			}

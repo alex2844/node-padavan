@@ -41,6 +41,10 @@ const client = new Padavan({
   - **v2**: Returns `{ daily: [], monthly: [] }`. Keys are renamed. Date fields
     are parsed into JavaScript `Date` objects and `dateStr` strings. Data is
     normalized.
+- **Changelog**:
+  - **v1**: Returned `{ from_id, to_id, data: [...] }`.
+  - **v2**: Returns `{ from, to, messages: [...] }`. Keys `from_id`/`to_id` were
+    renamed to `from`/`to`, and `data` to `messages`.
 - **Devices**:
   - **v1**: Returned `{ hostname, ip, mac, rssi }`.
   - **v2**: Returns `{ mac, ip, hostname, type, rssi }`. The `type` field
@@ -74,6 +78,12 @@ const client = new Padavan({
 
 - Added new actions: `Scan Wi-Fi` and `Wi-Fi Doctor`.
 
+### Devices Node Changes (`padavan-devices`)
+
+- **New Feature**: The node now calculates differences internally.
+  - `msg.changes.hasChanges` (boolean): `true` if list changed.
+  - `msg.changes.added`/`removed`/`changed`: Arrays of affected devices.
+
 ### Params Node Changes (`padavan-params`)
 
 - **New Options**: The node now supports additional parameters for `set` and
@@ -86,11 +96,17 @@ const client = new Padavan({
   - `ASP Page`: Specify the page context. Useful for parsing inputs in `get` or
     automatic Service ID detection in `set`.
 
+### Upgrade Node Changes (`padavan-upgrade`)
+
+- **Breaking Change**: `msg.payload` structure changed.
+  - **v1**: `{ from_id, to_id, data: [...] }`
+  - **v2**: `{ from, to, messages: [...] }`
+
 ### History Node Changes (`padavan-history`)
 
 - **Breaking Change**: `msg.payload` structure changed.
-  - Old: `{ daily_history: [...], monthly_history: [...] }`
-  - New: `{ daily: [...], monthly: [...] }`
+  - **v1**: `{ daily_history: [...], monthly_history: [...] }`
+  - **v2**: `{ daily: [...], monthly: [...] }`
 - `msg.networkUsage` and `msg.networkUsageMB` are preserved, but the calculation
   logic is improved: it now falls back to daily statistics if monthly data is
   unavailable.

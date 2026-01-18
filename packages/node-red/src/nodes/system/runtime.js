@@ -61,6 +61,8 @@ export class SystemNode {
 					throw new Error(`Invalid topic: "${topic}".`);
 			}
 			if (payload !== undefined) {
+				if (!msg.topic)
+					msg.topic = topic;
 				msg.payload = payload;
 				send(msg);
 			}

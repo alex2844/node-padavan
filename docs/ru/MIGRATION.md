@@ -40,6 +40,10 @@ const client = new Padavan({
     содержали сырые данные.
   - **v2**: Возвращает `{ daily: [], monthly: [] }`. Ключи переименованы. Даты
     автоматически парсятся в объекты `Date` и строки `dateStr`.
+- **Changelog (Список изменений)**:
+  - **v1**: Возвращал `{ from_id, to_id, data: [...] }`.
+  - **v2**: Возвращает `{ from, to, messages: [...] }`. Ключи `from_id`/`to_id`
+    переименованы в `from`/`to`, а `data` в `messages`.
 - **Devices (Устройства)**:
   - **v1**: Возвращал `{ hostname, ip, mac, rssi }`.
   - **v2**: Возвращает `{ mac, ip, hostname, type, rssi }`. Добавлено поле
@@ -73,6 +77,12 @@ const client = new Padavan({
 
 - Добавлены новые действия: `Scan Wi-Fi` и `Wi-Fi Doctor`.
 
+### Изменения в узле Devices (`padavan-devices`)
+
+- **Новая возможность**: Узел теперь сам вычисляет изменения в списке.
+  - `msg.changes.hasChanges` (boolean): `true`, если список изменился.
+  - `msg.changes.added`/`removed`/`changed`: Массивы затронутых устройств.
+
 ### Изменения в узле Params (`padavan-params`)
 
 - **Новые опции**: Узел теперь поддерживает дополнительные параметры для
@@ -86,11 +96,17 @@ const client = new Padavan({
   - `ASP Страница`: Указание контекста страницы. Полезно для парсинга HTML в
     `get` или автоматического определения Service ID в `set`.
 
+### Изменения в узле Upgrade (`padavan-upgrade`)
+
+- **Критическое изменение**: Структура `msg.payload` изменилась.
+  - **v1**: `{ from_id, to_id, data: [...] }`
+  - **v2**: `{ from, to, messages: [...] }`
+
 ### Изменения в узле History (`padavan-history`)
 
 - **Критическое изменение**: Структура `msg.payload` изменилась.
-  - Было: `{ daily_history: [...], monthly_history: [...] }`
-  - Стало: `{ daily: [...], monthly: [...] }`
+  - **v1**: `{ daily_history: [...], monthly_history: [...] }`
+  - **v2**: `{ daily: [...], monthly: [...] }`
 - Поля `msg.networkUsage` и `msg.networkUsageMB` сохранены, но логика расчета
   улучшена: теперь используется статистика за день, если данные за месяц
   отсутствуют.

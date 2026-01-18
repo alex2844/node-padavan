@@ -66,6 +66,8 @@ export class UpgradeNode {
 					throw new Error(`Invalid topic: "${topic}". Must be 'changelog', 'build', or 'upgrade'.`);
 			}
 			if (payload) {
+				if (!msg.topic)
+					msg.topic = topic;
 				msg.payload = payload;
 				send(msg);
 			}
