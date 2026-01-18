@@ -16,7 +16,7 @@
 	},
 	"files": [
 		"./bin/",
-		"./src/*.js"
+		"./src/"
 	],
 	"dependencies": {
 		"jszip": "^3.10.1",
