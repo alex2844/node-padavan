@@ -47,6 +47,8 @@ function check_deps() {
 
 function refresh_nodered_flow() {
 	local pkg_name="$1"
+	echo "   - ⏱️ Ожидание 30 секунд перед обновлением Node-RED Flows..."
+	sleep 30
 	echo "   - 🟡 Обновление на flows.nodered.org..."
 	local headers_file=$(mktemp)
 	local response_body=$(curl -s -D "${headers_file}" "${NODERED_FLOWS_URL}")
