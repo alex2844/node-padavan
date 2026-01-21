@@ -1,3 +1,4 @@
+import { formatUptime } from 'padavan/utils/formatting.js';
 /** @import { Node, NodeAPI, NodeDef, NodeMessage } from 'node-red' */
 /** @import { NodeInstance as ConfigNodeInstance, ConfigNode } from '../config/runtime.js' */
 
@@ -10,6 +11,7 @@ export class SystemNode {
 	/** @type {NodeInstance} */ #node;
 	/** @type {Config} */ #config;
 	/** @type {ConfigNode} */ #settings;
+	/** @type {{ state: object, timestamp: number }|null} */ #lastCpu = null;
 
 	constructor(/** @type {NodeInstance} */ node, /** @type {ConfigDef} */ config, /** @type {NodeAPI} */ RED) {
 		this.#node = node;
@@ -22,6 +24,9 @@ export class SystemNode {
 		else
 			this.#node.warn('Config node not found or configured.');
 		this.#node.on('input', this.#onInput.bind(this));
+		this.#node.on('close', () => {
+			this.#lastCpu = null;
+		});
 	};
 
 	get client() {
@@ -38,7 +43,22 @@ export class SystemNode {
 			let payload;
 			switch (topic) {
 				case 'status': {
+					const now = Date.now();
 					payload = await this.client.getStatus();
+					if (payload.ram?.total > 0)
+						payload.ramPercent = Math.round((payload.ram.used / payload.ram.total) * 100);
+					if (payload.uptime)
+						payload.uptimeStr = formatUptime(payload.uptime);
+					if (payload.cpu) {
+						payload.cpuPercent = null;
+						if (this.#lastCpu && (now - this.#lastCpu.timestamp < 30_000)) {
+							const busy_diff = payload.cpu.busy - this.#lastCpu.state.busy;
+							const total_diff = payload.cpu.total - this.#lastCpu.state.total;
+							if (total_diff > 0 && busy_diff >= 0)
+								payload.cpuPercent = Math.round((busy_diff / total_diff) * 100);
+						}
+						this.#lastCpu = { state: payload.cpu, timestamp: now };
+					}
 					break;
 				};
 				case 'log': {

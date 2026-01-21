@@ -5,7 +5,7 @@ Performs system diagnostics and control operations.
 ## Inputs
 
 - **Action** (`msg.topic`):
-  - `status`: Get system status (CPU, RAM, Uptime).
+  - `status`: Get system status.
   - `log`: Get the system log.
   - `reboot`: Reboot the router.
   - `scan`: Scan for Wi-Fi networks (Site Survey).
@@ -16,8 +16,14 @@ Performs system diagnostics and control operations.
 
 ## Outputs
 
-- `msg.payload`: The result of the operation (JSON object for status/doctor,
-  array for scan, string for log).
+- `msg.payload`: The result of the operation.
+  - For `status`, the object is enhanced with:
+    - `uptimeStr` (`string`): A formatted uptime string (e.g., "5d 12h 30m").
+    - `cpuPercent` (`number` | `null`): Calculated CPU usage.
+    - `ramPercent` (`number`): Calculated RAM usage.
+  - For `scan`, an array of networks.
+  - For `doctor`, an analysis object.
+  - For `log`, a string.
 
 ## Details
 
