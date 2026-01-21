@@ -2,6 +2,7 @@ import { debuglog, inspect } from 'util';
 import jszip from 'jszip';
 import HttpClient from './transport/http.js';
 import GitHubClient from './transport/github.js';
+import { sanitizeObject } from './utils/sanitizers.js';
 import {
 	parsePageInputs, parseNvramOutput, parseLooseJson, normalizeTrafficHistory,
 	extractJsVariable, extractTextareaValue, extractMacsFromTextarea, extractCurrentChannel
@@ -118,13 +119,16 @@ export default class Padavan {
 	 * @param {Config} config Конфигурация для подключения.
 	 */
 	constructor(config = {}) {
-		this.config = config;
+		const sanitized = sanitizeObject(config, ['credentials', 'logLevel']);
+		if (sanitized.credentials)
+			sanitized.credentials = sanitizeObject(sanitized.credentials, ['host', 'port', 'username', 'password', 'repo', 'branch', 'token']);
+		this.config = sanitized;
 		this.#debugLog = debuglog(LIB_ID);
 		this.#isDebugEnvEnabled = process.env.NODE_DEBUG && new RegExp(`\\b${LIB_ID}\\b`, 'i').test(process.env.NODE_DEBUG);
 		this.#logLevelNumber = LOG_LEVELS[config?.logLevel] || LOG_LEVELS[DEFAULT_LOG_LEVEL];
 		this.#http = new HttpClient(this.config?.credentials, this.log.bind(this));
 		this.#github = new GitHubClient(this.config?.credentials, this.log.bind(this));
-		this.log('debug', 'Padavan instance created with config:', config);
+		this.log('debug', 'Padavan instance created with config:', this.config);
 	};
 
 	/**
