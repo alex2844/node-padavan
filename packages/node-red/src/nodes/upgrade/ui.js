@@ -1,5 +1,6 @@
 /** @import { EditorRED, EditorNodePropertiesDef } from 'node-red' */
-/** @import { Config } from './runtime.js' */
+/** @import { TypedInputOption, TypedInputDefinition } from '../../utils/node-red.js' */
+/** @import { Action, Config } from './runtime.js' */
 
 let /** @type {EditorRED} */ RED = window['RED'];
 
@@ -21,11 +22,12 @@ RED.nodes.registerType('padavan-upgrade', {
 	},
 	oneditprepare: function () {
 		$('#node-input-topic').typedInput({
+			/** @type {TypedInputDefinition<Config['topicType']>[]} */
 			types: [
 				'msg',
 				{
 					value: 'action',
-					options: [
+					/** @type {TypedInputOption<Action>[]} */ options: [
 						{ value: 'changelog', label: this._('upgrade.action.changelog') },
 						{ value: 'build', label: this._('upgrade.action.build') },
 						{ value: 'upgrade', label: this._('upgrade.action.upgrade') }

@@ -1,7 +1,15 @@
+import { evaluateNodeProperty } from '../../utils/node-red.js';
 /** @import { Node, NodeAPI, NodeDef, NodeMessage } from 'node-red' */
 /** @import { NodeInstance as ConfigNodeInstance, ConfigNode } from '../config/runtime.js' */
 
-/** @typedef {{ name: string, settings: string, topic: string, topicType: string }} Config */
+/** @typedef {'changelog'|'build'|'upgrade'} Action */
+
+/**
+ * @typedef {{
+ *  name: string, settings: string,
+ *  topic: Action|(string & {}), topicType: 'msg'|'action'
+ * }} Config
+ */
 /** @typedef {NodeDef & Config} ConfigDef */
 /** @typedef {Node & { instance: UpgradeNode }} NodeInstance */
 
@@ -31,12 +39,11 @@ export class UpgradeNode {
 	};
 
 	async #onInput(/** @type {NodeMessage} */ msg, /** @type {(...args: any[]) => void} */ send, /** @type {(err?: Error) => void} */ done) {
-		const topic = this.#RED.util.evaluateNodeProperty(this.#config.topic, this.#config.topicType, this.#node, msg);
-
 		try {
+			const topic = await evaluateNodeProperty(this.#RED, this.#config.topic, this.#config.topicType, this.#node, msg);
 			this.#node.status({ fill: 'blue', shape: 'dot', text: 'Processing...' });
 			let payload;
-			switch (topic) {
+			switch (/** @type {Action} */ (topic)) {
 				case 'changelog': {
 					this.#node.status({ fill: 'blue', shape: 'dot', text: 'Checking updates...' });
 					payload = await this.client.getChangelog();

@@ -1,5 +1,6 @@
 /** @import { EditorRED, EditorNodePropertiesDef } from 'node-red' */
-/** @import { Config } from './runtime.js' */
+/** @import { TypedInputOption, TypedInputDefinition } from '../../utils/node-red.js' */
+/** @import { Action, Band, Config } from './runtime.js' */
 
 let /** @type {EditorRED} */ RED = window['RED'];
 
@@ -11,7 +12,7 @@ RED.nodes.registerType('padavan-system', {
 		topic: { value: 'topic' },
 		topicType: { value: 'msg' },
 		band: { value: '2.4' },
-		bandType: { value: 'str' }
+		bandType: { value: 'band' }
 	},
 	icon: 'font-awesome/fa-server',
 	inputs: 1,
@@ -23,11 +24,12 @@ RED.nodes.registerType('padavan-system', {
 	},
 	oneditprepare: function () {
 		$('#node-input-topic').typedInput({
+			/** @type {TypedInputDefinition<Config['topicType']>[]} */
 			types: [
 				'msg',
 				{
 					value: 'action',
-					options: [
+					/** @type {TypedInputOption<Action>[]} */ options: [
 						{ value: 'status', label: this._('system.action.status') },
 						{ value: 'log', label: this._('system.action.log') },
 						{ value: 'reboot', label: this._('system.action.reboot') },
@@ -45,10 +47,11 @@ RED.nodes.registerType('padavan-system', {
 		});
 
 		$('#node-input-band').typedInput({
+			/** @type {TypedInputDefinition<Config['bandType']>[]} */
 			types: [
 				{
-					value: 'str',
-					options: [
+					value: 'band',
+					/** @type {TypedInputOption<Band>[]} */ options: [
 						{ value: '2.4', label: '2.4 GHz' },
 						{ value: '5', label: '5 GHz' }
 					]

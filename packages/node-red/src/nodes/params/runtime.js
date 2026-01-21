@@ -1,15 +1,20 @@
+import { evaluateNodeProperties } from '../../utils/node-red.js';
 /** @import { Node, NodeAPI, NodeDef, NodeMessage } from 'node-red' */
+/** @import { ActionMode, ServiceId, GroupId } from 'padavan/constants.js' */
 /** @import { NodeInstance as ConfigNodeInstance, ConfigNode } from '../config/runtime.js' */
+
+/** @typedef {'list'|'get'|'set'} Action */
 
 /**
  * @typedef {{
- *  name: string, settings: string, topic: string, topicType: string,
- *  payload: string, payloadType: string,
- *  page: string, pageType: string,
- *  sid: string, sidType: string,
- *  group: string, groupType: string,
- *  script: string, scriptType: string,
- *  action: string, actionType: string
+ *  name: string, settings: string,
+ *  topic: Action|(string & {}), topicType: 'msg'|'action'
+ *  payload: string, payloadType: 'msg'|'json'|'str'|'jsonata',
+ *  page: string, pageType: 'str'|'msg',
+ *  sid: ServiceId|(string & {}), sidType: 'str'|'json'|'msg'|'sid',
+ *  group: GroupId|(string & {}), groupType: 'str'|'msg'|'group',
+ *  script: string, scriptType: 'str'|'msg',
+ *  action: ActionMode|(string & {}), actionType: 'mode'|'str'|'msg'
  * }} Config
  */
 /** @typedef {NodeDef & Config} ConfigDef */
@@ -41,17 +46,21 @@ export class ParamsNode {
 	};
 
 	async #onInput(/** @type {NodeMessage} */ msg, /** @type {(...args: any[]) => void} */ send, /** @type {(err?: Error) => void} */ done) {
-		const topic = this.#RED.util.evaluateNodeProperty(this.#config.topic, this.#config.topicType, this.#node, msg);
-		const payload = this.#RED.util.evaluateNodeProperty(this.#config.payload, this.#config.payloadType, this.#node, msg);
-		const action_mode = this.#RED.util.evaluateNodeProperty(this.#config.action, this.#config.actionType, this.#node, msg);
-		const action_script = this.#RED.util.evaluateNodeProperty(this.#config.script, this.#config.scriptType, this.#node, msg);
-		const sid_list = this.#RED.util.evaluateNodeProperty(this.#config.sid, this.#config.sidType, this.#node, msg);
-		const group_id = this.#RED.util.evaluateNodeProperty(this.#config.group, this.#config.groupType, this.#node, msg);
-		const current_page = this.#RED.util.evaluateNodeProperty(this.#config.page, this.#config.pageType, this.#node, msg);
 		try {
+			const [
+				topic, payload, action_mode, action_script, sid_list, group_id, current_page
+			] = await evaluateNodeProperties(this.#RED, this.#node, msg, [
+				{ value: this.#config.topic, type: this.#config.topicType },
+				{ value: this.#config.payload, type: this.#config.payloadType },
+				{ value: this.#config.action, type: this.#config.actionType },
+				{ value: this.#config.script, type: this.#config.scriptType },
+				{ value: this.#config.sid, type: this.#config.sidType },
+				{ value: this.#config.group, type: this.#config.groupType },
+				{ value: this.#config.page, type: this.#config.pageType }
+			]);
 			this.#node.status({ fill: 'blue', shape: 'dot', text: 'Processing...' });
 			let result;
-			switch (topic) {
+			switch (/** @type {Action} */ (topic)) {
 				case 'list': {
 					result = await this.client.getParams();
 					break;

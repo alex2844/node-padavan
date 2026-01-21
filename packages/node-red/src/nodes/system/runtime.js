@@ -1,8 +1,18 @@
 import { formatUptime } from 'padavan/utils/formatting.js';
+import { evaluateNodeProperties } from '../../utils/node-red.js';
 /** @import { Node, NodeAPI, NodeDef, NodeMessage } from 'node-red' */
 /** @import { NodeInstance as ConfigNodeInstance, ConfigNode } from '../config/runtime.js' */
 
-/** @typedef {{ name: string, settings: string, topic: string, topicType: string, band: string, bandType: string }} Config */
+/** @typedef {'status'|'log'|'reboot'|'scan'|'doctor'} Action */
+/** @typedef {'2.4'|'5'} Band */
+
+/**
+ * @typedef {{
+ *  name: string, settings: string,
+ *  topic: Action|(string & {}), topicType: 'msg'|'action'
+ *  band: Band|(string & {}), bandType: 'band'|'msg'
+ * }} Config
+ */
 /** @typedef {NodeDef & Config} ConfigDef */
 /** @typedef {Node & { instance: SystemNode }} NodeInstance */
 
@@ -36,12 +46,14 @@ export class SystemNode {
 	};
 
 	async #onInput(/** @type {NodeMessage} */ msg, /** @type {(...args: any[]) => void} */ send, /** @type {(err?: Error) => void} */ done) {
-		const topic = this.#RED.util.evaluateNodeProperty(this.#config.topic, this.#config.topicType, this.#node, msg);
-		const band = this.#RED.util.evaluateNodeProperty(this.#config.band, this.#config.bandType, this.#node, msg) || '2.4';
 		try {
+			const [topic, band] = await evaluateNodeProperties(this.#RED, this.#node, msg, [
+				{ value: this.#config.topic, type: this.#config.topicType },
+				{ value: this.#config.band, type: this.#config.bandType }
+			]);
 			this.#node.status({ fill: 'blue', shape: 'dot', text: `Running ${topic}...` });
 			let payload;
-			switch (topic) {
+			switch (/** @type {Action} */ (topic)) {
 				case 'status': {
 					const now = Date.now();
 					payload = await this.client.getStatus();

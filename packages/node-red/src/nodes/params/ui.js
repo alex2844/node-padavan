@@ -1,14 +1,10 @@
 import { ACTION_MODE, SERVICE_ID, GROUP_ID } from 'padavan/constants.js';
+import { createTypedInputOptions } from '../../utils/node-red.js';
 /** @import { EditorRED, EditorNodePropertiesDef } from 'node-red' */
-/** @import { Config } from './runtime.js' */
+/** @import { TypedInputOption, TypedInputDefinition } from '../../utils/node-red.js' */
+/** @import { Action, Config } from './runtime.js' */
 
 let /** @type {EditorRED} */ RED = window['RED'];
-
-const mapOptions = (/** @type {readonly string[]} */ list) => list.map(value => ({ value, label: value.trim() }));
-
-const ACTION_MODES = mapOptions(ACTION_MODE);
-const SERVICE_IDS = mapOptions(SERVICE_ID);
-const GROUP_IDS = mapOptions(GROUP_ID);
 
 RED.nodes.registerType('padavan-params', {
 	category: 'Padavan',
@@ -40,11 +36,12 @@ RED.nodes.registerType('padavan-params', {
 	},
 	oneditprepare: function () {
 		$('#node-input-topic').typedInput({
+			/** @type {TypedInputDefinition<Config['topicType']>[]} */
 			types: [
 				'msg',
 				{
 					value: 'action',
-					options: [
+					/** @type {TypedInputOption<Action>[]} */ options: [
 						{ value: 'list', label: this._('params.action.list') },
 						{ value: 'get', label: this._('params.action.get') },
 						{ value: 'set', label: this._('params.action.set') }
@@ -55,51 +52,57 @@ RED.nodes.registerType('padavan-params', {
 		});
 
 		$('#node-input-payload').typedInput({
-			types: ['msg', 'json', 'str'],
+			/** @type {TypedInputDefinition<Config['payloadType']>[]} */
+			types: ['msg', 'json', 'str', 'jsonata'],
 			typeField: '#node-input-payloadType'
 		});
 
 		$('#node-input-page').typedInput({
+			/** @type {TypedInputDefinition<Config['pageType']>[]} */
 			types: ['str', 'msg'],
 			typeField: '#node-input-pageType'
 		});
 
 		$('#node-input-sid').typedInput({
+			/** @type {TypedInputDefinition<Config['sidType']>[]} */
 			types: [
 				'str', 'json', 'msg',
 				{
 					value: 'sid',
-					options: SERVICE_IDS
+					options: createTypedInputOptions(SERVICE_ID)
 				}
 			],
 			typeField: '#node-input-sidType'
 		});
 
 		$('#node-input-group').typedInput({
+			/** @type {TypedInputDefinition<Config['groupType']>[]} */
 			types: [
 				'str', 'msg',
 				{
 					value: 'group',
-					options: GROUP_IDS
+					options: createTypedInputOptions(GROUP_ID)
 				}
 			],
 			typeField: '#node-input-groupType'
 		});
 
 		$('#node-input-script').typedInput({
+			/** @type {TypedInputDefinition<Config['scriptType']>[]} */
 			types: ['str', 'msg'],
 			typeField: '#node-input-scriptType'
 		});
 
 		$('#node-input-action').typedInput({
+			/** @type {TypedInputDefinition<Config['actionType']>[]} */
 			types: [
 				{
 					value: 'mode',
-					options: ACTION_MODES
+					options: createTypedInputOptions(ACTION_MODE)
 				},
 				'str', 'msg'
 			],
-			typeField: '#node-input-actionModeType'
+			typeField: '#node-input-actionType'
 		});
 
 		$('#node-input-topic').on('change', function () {
