@@ -16,16 +16,17 @@ Performs system diagnostics and control operations.
 
 ## Outputs
 
-- `msg.payload`: The result of the operation.
-  - For `status`, the object is enhanced with:
-    - `uptimeStr` (`string`): A formatted uptime string (e.g., "5d 12h 30m").
-    - `cpuPercent` (`number` | `null`): Calculated CPU usage.
-    - `ramPercent` (`number`): Calculated RAM usage.
-  - For `scan`, an array of networks.
-  - For `doctor`, an analysis object.
-  - For `log`, a string.
+- `msg.payload`: The raw result object from the library.
+  - For `status`: A JSON object with raw system data.
+  - For `scan`: An array of networks.
+  - For `doctor`: An analysis object.
+  - For `log`: A string.
+- For the `status` action, the message is also enriched with properties:
+  - `msg.uptimeStr` (`string`): A formatted uptime string (e.g., "5d 12h 30m").
+  - `msg.cpuPercent` (`number` | `null`): Calculated CPU usage.
+  - `msg.ramPercent` (`number`): Calculated RAM usage.
 
 ## Details
 
-The **Wi-Fi Doctor** action analyzes all visible networks, calculates
-interference scores, and suggests the optimal channel for your router.
+For an accurate `cpuPercent`, the `status` action should be triggered
+regularly (e.g., every 5-10 seconds).

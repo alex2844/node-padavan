@@ -55,19 +55,19 @@ export class SystemNode {
 			let payload;
 			switch (/** @type {Action} */ (topic)) {
 				case 'status': {
-					const now = Date.now();
 					payload = await this.client.getStatus();
-					if (payload.ram?.total > 0)
-						payload.ramPercent = Math.round((payload.ram.used / payload.ram.total) * 100);
 					if (payload.uptime)
-						payload.uptimeStr = formatUptime(payload.uptime);
+						msg.uptimeStr = formatUptime(payload.uptime);
+					if (payload.ram?.total > 0)
+						msg.ramPercent = Math.round((payload.ram.used / payload.ram.total) * 100);
 					if (payload.cpu) {
-						payload.cpuPercent = null;
+						msg.cpuPercent = null;
+						const now = Date.now();
 						if (this.#lastCpu && (now - this.#lastCpu.timestamp < 30_000)) {
 							const busy_diff = payload.cpu.busy - this.#lastCpu.state.busy;
 							const total_diff = payload.cpu.total - this.#lastCpu.state.total;
 							if (total_diff > 0 && busy_diff >= 0)
-								payload.cpuPercent = Math.round((busy_diff / total_diff) * 100);
+								msg.cpuPercent = Math.round((busy_diff / total_diff) * 100);
 						}
 						this.#lastCpu = { state: payload.cpu, timestamp: now };
 					}
