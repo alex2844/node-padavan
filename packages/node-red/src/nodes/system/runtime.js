@@ -2,15 +2,16 @@ import { formatUptime } from 'padavan/utils/formatting.js';
 import { evaluateNodeProperties } from '../../utils/node-red.js';
 /** @import { Node, NodeAPI, NodeDef, NodeMessage } from 'node-red' */
 /** @import { NodeInstance as ConfigNodeInstance, ConfigNode } from '../config/runtime.js' */
+/** @import { SystemAction, WifiBand } from 'padavan/constants.js' */
 
-/** @typedef {'status'|'log'|'reboot'|'scan'|'doctor'} Action */
-/** @typedef {'2.4'|'5'} Band */
+/** @typedef {'status'|'log'|'reboot'|'scan'|'doctor'|'call'} Action */
 
 /**
  * @typedef {{
  *  name: string, settings: string,
  *  topic: Action|(string & {}), topicType: 'msg'|'action'
- *  band: Band|(string & {}), bandType: 'band'|'msg'
+ *  band: WifiBand|(string & {}), bandType: 'band'|'msg',
+ *  action: SystemAction|(string & {}), actionType: 'mode'|'str'|'msg'
  * }} Config
  */
 /** @typedef {NodeDef & Config} ConfigDef */
@@ -47,9 +48,10 @@ export class SystemNode {
 
 	async #onInput(/** @type {NodeMessage} */ msg, /** @type {(...args: any[]) => void} */ send, /** @type {(err?: Error) => void} */ done) {
 		try {
-			const [topic, band] = await evaluateNodeProperties(this.#RED, this.#node, msg, [
+			const [topic, band, action] = await evaluateNodeProperties(this.#RED, this.#node, msg, [
 				{ value: this.#config.topic, type: this.#config.topicType },
-				{ value: this.#config.band, type: this.#config.bandType }
+				{ value: this.#config.band, type: this.#config.bandType },
+				{ value: this.#config.action, type: this.#config.actionType }
 			]);
 			this.#node.status({ fill: 'blue', shape: 'dot', text: `Running ${topic}...` });
 			let payload;
@@ -87,6 +89,13 @@ export class SystemNode {
 				};
 				case 'doctor': {
 					payload = await this.client.getBestChannel(band);
+					break;
+				};
+				case 'call': {
+					if (!action)
+						throw new Error('System Action is required for "call" operation');
+					await this.client.sendAction(action);
+					payload = { action };
 					break;
 				};
 				default:

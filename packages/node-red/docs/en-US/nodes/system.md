@@ -10,17 +10,17 @@ Performs system diagnostics and control operations.
   - `reboot`: Reboot the router.
   - `scan`: Scan for Wi-Fi networks (Site Survey).
   - `doctor`: Analyze Wi-Fi environment and recommend the best channel.
+  - `call`: Execute a low-level system action.
 - **Band** (`msg.band`):
   - Used for `scan` and `doctor`.
   - Values: `'2.4'` or `'5'`.
+- **System Action** (`msg.action`):
+  - Used for `call`.
+  - Values: `Reboot`, `ClearLog`, `FreeMemory`, `CommitFlash`, etc.
 
 ## Outputs
 
 - `msg.payload`: The raw result object from the library.
-  - For `status`: A JSON object with raw system data.
-  - For `scan`: An array of networks.
-  - For `doctor`: An analysis object.
-  - For `log`: A string.
 - For the `status` action, the message is also enriched with properties:
   - `msg.uptimeStr` (`string`): A formatted uptime string (e.g., "5d 12h 30m").
   - `msg.cpuPercent` (`number` | `null`): Calculated CPU usage.

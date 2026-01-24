@@ -4,7 +4,8 @@
 			"settings": "Config",
 			"name": "Name",
 			"topic": "Action",
-			"band": "Band"
+			"band": "Band",
+			"action": "System Action"
 		},
 		"placeholder": {
 			"name": "System"
@@ -14,7 +15,8 @@
 			"log": "Get Log",
 			"reboot": "Reboot",
 			"scan": "Scan Wi-Fi",
-			"doctor": "Wi-Fi Doctor"
+			"doctor": "Wi-Fi Doctor",
+			"call": "Execute Command"
 		}
 	}
 }

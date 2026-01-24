@@ -1,6 +1,8 @@
+import { SYSTEM_ACTION, WIFI_BANDS } from 'padavan/constants.js';
+import { createTypedInputOptions } from '../../utils/node-red.js';
 /** @import { EditorRED, EditorNodePropertiesDef } from 'node-red' */
 /** @import { TypedInputOption, TypedInputDefinition } from '../../utils/node-red.js' */
-/** @import { Action, Band, Config } from './runtime.js' */
+/** @import { Action, Config } from './runtime.js' */
 
 let /** @type {EditorRED} */ RED = window['RED'];
 
@@ -11,8 +13,10 @@ RED.nodes.registerType('padavan-system', {
 		name: { value: '' },
 		topic: { value: 'topic' },
 		topicType: { value: 'msg' },
-		band: { value: '2.4' },
-		bandType: { value: 'band' }
+		band: { value: WIFI_BANDS[0] },
+		bandType: { value: 'band' },
+		action: { value: SYSTEM_ACTION.SYSTEM_CMD },
+		actionType: { value: 'mode' }
 	},
 	icon: 'font-awesome/fa-server',
 	inputs: 1,
@@ -34,7 +38,8 @@ RED.nodes.registerType('padavan-system', {
 						{ value: 'log', label: this._('system.action.log') },
 						{ value: 'reboot', label: this._('system.action.reboot') },
 						{ value: 'scan', label: this._('system.action.scan') },
-						{ value: 'doctor', label: this._('system.action.doctor') }
+						{ value: 'doctor', label: this._('system.action.doctor') },
+						{ value: 'call', label: this._('system.action.call') }
 					]
 				}
 			],
@@ -43,7 +48,9 @@ RED.nodes.registerType('padavan-system', {
 			const type = $('#node-input-topicType').val();
 			const value = $('#node-input-topic').val();
 			const showBand = (type === 'action' && (value === 'scan' || value === 'doctor')) || (type === 'msg');
+			const showAction = (type === 'action' && value === 'call') || (type === 'msg');
 			$('#node-input-band-row').toggle(showBand);
+			$('#node-input-action-row').toggle(showAction);
 		});
 
 		$('#node-input-band').typedInput({
@@ -51,14 +58,26 @@ RED.nodes.registerType('padavan-system', {
 			types: [
 				{
 					value: 'band',
-					/** @type {TypedInputOption<Band>[]} */ options: [
-						{ value: '2.4', label: '2.4 GHz' },
-						{ value: '5', label: '5 GHz' }
-					]
+					options: WIFI_BANDS.map(band => ({
+						value: band,
+						label: `${band} GHz`
+					}))
 				},
 				'msg'
 			],
 			typeField: '#node-input-bandType'
+		});
+
+		$('#node-input-action').typedInput({
+			/** @type {TypedInputDefinition<Config['actionType']>[]} */
+			types: [
+				{
+					value: 'mode',
+					options: createTypedInputOptions(Object.values(SYSTEM_ACTION))
+				},
+				'str', 'msg'
+			],
+			typeField: '#node-input-actionType'
 		});
 	}
 });
