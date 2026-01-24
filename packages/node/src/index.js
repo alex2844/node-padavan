@@ -150,24 +150,7 @@ export default class Padavan {
 	 * @returns {Promise<string>} Вывод команды (stdout + stderr).
 	 */
 	async exec(command) {
-		const result = this.#commandQueue.then(async () => {
-			this.log('debug', `Executing command: ${command}`);
-			if (!this.#http)
-				throw new Error('HTTP client not initialized');
-			try {
-				await this.#http.post(PAGES.APPLY, {
-					action_mode: SYSTEM_ACTION.SYSTEM_CMD,
-					SystemCmd: command
-				});
-				const response = await this.#http.get(PAGES.CONSOLE_RESPONSE);
-				return response.trim();
-			} catch (e) {
-				this.log('error', `Command execution failed: ${command}`, e);
-				throw e;
-			}
-		});
-		this.#commandQueue = result.catch(() => {});
-		return result;
+		return this.sendAction(SYSTEM_ACTION.SYSTEM_CMD, { SystemCmd: command });
 	};
 
 	/**
@@ -285,16 +268,31 @@ export default class Padavan {
 	};
 
 	/**
-	 * Отправляет системную команду на apply.cgi.
+	 * Отправляет системную команду на apply.cgi и возвращает результат.
 	 * @param {SystemAction} action Режим действия.
 	 * @param {Object} [payload] Дополнительные данные.
+	 * @returns {Promise<string>} Тело ответа от сервера.
 	 */
 	async sendAction(action, payload = {}) {
-		this.log('info', `Sending system action: ${action.trim()}`);
-		await this.#http.post(PAGES.APPLY, {
-			action_mode: action,
-			...payload
+		const result = this.#commandQueue.then(async () => {
+			this.log('info', `Sending system action: ${action}`);
+			try {
+				const result = await this.#http.post(PAGES.APPLY, {
+					action_mode: action,
+					...payload
+				});
+				if (action === SYSTEM_ACTION.SYSTEM_CMD) {
+					const response = await this.#http.get(PAGES.CONSOLE_RESPONSE);
+					return response.trim();
+				}
+				return result;
+			} catch (e) {
+				this.log('error', `Sending system action failed: ${action}`, e);
+				throw e;
+			}
 		});
+		this.#commandQueue = result.catch(() => {});
+		return result;
 	};
 
 	/**
