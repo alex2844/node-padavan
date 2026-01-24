@@ -1,6 +1,6 @@
 import { evaluateNodeProperties } from '../../utils/node-red.js';
 /** @import { Node, NodeAPI, NodeDef, NodeMessage } from 'node-red' */
-/** @import { ActionMode, ServiceId, GroupId } from 'padavan/constants.js' */
+/** @import { ConfigAction, ServiceId, GroupId } from 'padavan/constants.js' */
 /** @import { NodeInstance as ConfigNodeInstance, ConfigNode } from '../config/runtime.js' */
 
 /** @typedef {'list'|'get'|'set'} Action */
@@ -14,7 +14,7 @@ import { evaluateNodeProperties } from '../../utils/node-red.js';
  *  sid: ServiceId|(string & {}), sidType: 'str'|'json'|'msg'|'sid',
  *  group: GroupId|(string & {}), groupType: 'str'|'msg'|'group',
  *  script: string, scriptType: 'str'|'msg',
- *  action: ActionMode|(string & {}), actionType: 'mode'|'str'|'msg'
+ *  action: ConfigAction|(string & {}), actionType: 'mode'|'str'|'msg'
  * }} Config
  */
 /** @typedef {NodeDef & Config} ConfigDef */

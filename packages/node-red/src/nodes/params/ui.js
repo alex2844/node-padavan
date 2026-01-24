@@ -1,4 +1,4 @@
-import { ACTION_MODE, SERVICE_ID, GROUP_ID } from 'padavan/constants.js';
+import { CONFIG_ACTION, SERVICE_ID, GROUP_ID } from 'padavan/constants.js';
 import { createTypedInputOptions } from '../../utils/node-red.js';
 /** @import { EditorRED, EditorNodePropertiesDef } from 'node-red' */
 /** @import { TypedInputOption, TypedInputDefinition } from '../../utils/node-red.js' */
@@ -23,8 +23,8 @@ RED.nodes.registerType('padavan-params', {
 		groupType: { value: 'str' },
 		script: { value: '' },
 		scriptType: { value: 'str' },
-		action: { value: ' Apply ' },
-		actionType: { value: 'str' }
+		action: { value: CONFIG_ACTION.APPLY },
+		actionType: { value: 'mode' }
 	},
 	icon: 'font-awesome/fa-cogs',
 	inputs: 1,
@@ -98,7 +98,7 @@ RED.nodes.registerType('padavan-params', {
 			types: [
 				{
 					value: 'mode',
-					options: createTypedInputOptions(ACTION_MODE)
+					options: createTypedInputOptions(Object.values(CONFIG_ACTION))
 				},
 				'str', 'msg'
 			],
