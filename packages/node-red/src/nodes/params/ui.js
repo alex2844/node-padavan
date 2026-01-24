@@ -49,6 +49,19 @@ RED.nodes.registerType('padavan-params', {
 				}
 			],
 			typeField: '#node-input-topicType'
+		}).on('change', function () {
+			const type = $('#node-input-topicType').val();
+			const value = $('#node-input-topic').val();
+
+			const isSet = (type === 'action' && value === 'set') || (type === 'msg');
+			const isList = (type === 'action' && value === 'list');
+
+			$('#node-row-payload').toggle(!isList);
+			$('#node-row-page').toggle(!isList);
+			$('#node-row-sid').toggle(isSet);
+			$('#node-row-group').toggle(isSet);
+			$('#node-row-script').toggle(isSet);
+			$('#node-row-action').toggle(isSet);
 		});
 
 		$('#node-input-payload').typedInput({
@@ -103,21 +116,6 @@ RED.nodes.registerType('padavan-params', {
 				'str', 'msg'
 			],
 			typeField: '#node-input-actionType'
-		});
-
-		$('#node-input-topic').on('change', function () {
-			const type = $('#node-input-topicType').val();
-			const value = $('#node-input-topic').val();
-
-			const isSet = (type === 'action' && value === 'set') || (type === 'msg');
-			const isList = (type === 'action' && value === 'list');
-
-			$('#node-row-payload').toggle(!isList);
-			$('#node-row-page').toggle(!isList);
-			$('#node-row-sid').toggle(isSet);
-			$('#node-row-group').toggle(isSet);
-			$('#node-row-script').toggle(isSet);
-			$('#node-row-action').toggle(isSet);
 		});
 	}
 });

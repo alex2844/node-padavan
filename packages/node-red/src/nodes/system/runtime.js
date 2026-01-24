@@ -54,57 +54,61 @@ export class SystemNode {
 				{ value: this.#config.action, type: this.#config.actionType }
 			]);
 			this.#node.status({ fill: 'blue', shape: 'dot', text: `Running ${topic}...` });
-			let payload;
+			let result;
 			switch (/** @type {Action} */ (topic)) {
 				case 'status': {
-					payload = await this.client.getStatus();
-					if (payload.uptime)
-						msg.uptimeStr = formatUptime(payload.uptime);
-					if (payload.ram?.total > 0)
-						msg.ramPercent = Math.round((payload.ram.used / payload.ram.total) * 100);
-					if (payload.cpu) {
+					result = await this.client.getStatus();
+					if (result.uptime)
+						msg.uptimeStr = formatUptime(result.uptime);
+					if (result.ram?.total > 0)
+						msg.ramPercent = Math.round((result.ram.used / result.ram.total) * 100);
+					if (result.cpu) {
 						msg.cpuPercent = null;
 						const now = Date.now();
 						if (this.#lastCpu && (now - this.#lastCpu.timestamp < 30_000)) {
-							const busy_diff = payload.cpu.busy - this.#lastCpu.state.busy;
-							const total_diff = payload.cpu.total - this.#lastCpu.state.total;
+							const busy_diff = result.cpu.busy - this.#lastCpu.state.busy;
+							const total_diff = result.cpu.total - this.#lastCpu.state.total;
 							if (total_diff > 0 && busy_diff >= 0)
 								msg.cpuPercent = Math.round((busy_diff / total_diff) * 100);
 						}
-						this.#lastCpu = { state: payload.cpu, timestamp: now };
+						this.#lastCpu = { state: result.cpu, timestamp: now };
 					}
 					break;
 				};
 				case 'log': {
-					payload = await this.client.getLog();
+					result = await this.client.getLog();
 					break;
 				};
 				case 'reboot': {
-					payload = await this.client.startReboot();
+					result = await this.client.startReboot();
 					break;
 				};
 				case 'scan': {
-					payload = await this.client.startScan(band);
+					result = await this.client.startScan(band);
 					break;
 				};
 				case 'doctor': {
-					payload = await this.client.getBestChannel(band);
+					result = await this.client.getBestChannel(band);
 					break;
 				};
 				case 'call': {
 					if (!action)
 						throw new Error('System Action is required for "call" operation');
-					await this.client.sendAction(action);
-					payload = { action };
+					let data = {};
+					if (typeof msg.payload === 'object' && msg.payload !== null)
+						data = msg.payload;
+					else if (typeof msg.payload === 'string' && action.trim() === 'SystemCmd')
+						data = { SystemCmd: msg.payload };
+					result = await this.client.sendAction(action, data);
 					break;
 				};
 				default:
 					throw new Error(`Invalid topic: "${topic}".`);
 			}
-			if (payload !== undefined) {
+			if (result !== undefined) {
 				if (!msg.topic)
 					msg.topic = topic;
-				msg.payload = payload;
+				msg.payload = result;
 				send(msg);
 			}
 			this.#node.status({});

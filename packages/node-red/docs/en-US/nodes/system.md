@@ -17,6 +17,11 @@ Performs system diagnostics and control operations.
 - **System Action** (`msg.action`):
   - Used for `call`.
   - Values: `Reboot`, `ClearLog`, `FreeMemory`, `CommitFlash`, etc.
+- `msg.payload` (for `call` action):
+  - If the action is `SystemCmd` and payload is a **string**,
+    it is executed as a console command.
+  - If payload is an **object**, it is sent as POST parameters
+    (e.g. `{ action: 'genkey' }` for `wg_action`).
 
 ## Outputs
 
