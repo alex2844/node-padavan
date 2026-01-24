@@ -4,8 +4,8 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import Padavan from '../src/index.js';
 import { formatBytes, formatUptime } from '../src/utils/formatting.js';
-import { DEFAULT_HTTP_CONFIG, DEFAULT_FIRMWARE_REPO, ACTION_MODE, SERVICE_ID, GROUP_ID } from '../src/constants.js';
-/** @import { ActionMode, ServiceId, GroupId } from '../src/constants.js' */
+import { DEFAULT_HTTP_CONFIG, DEFAULT_FIRMWARE_REPO, SYSTEM_ACTION, CONFIG_ACTION, SERVICE_ID, GROUP_ID, WIFI_BANDS } from '../src/constants.js';
+/** @import { SystemAction, ConfigAction, ServiceId, GroupId, WifiBand } from '../src/constants.js' */
 /** @import { ArgumentsCamelCase } from 'yargs' */
 /** @import { Device, WifiNetwork, ChannelAnalysis } from '../src/index.js' */
 
@@ -28,6 +28,8 @@ import { DEFAULT_HTTP_CONFIG, DEFAULT_FIRMWARE_REPO, ACTION_MODE, SERVICE_ID, GR
  * @property {string} [model]
  */
 
+const SYSTEM_ACTION_VALUES = Object.values(SYSTEM_ACTION);
+const CONFIG_ACTION_VALUES = Object.values(CONFIG_ACTION);
 const logInfo = (/** @type {string} */ msg) => console.error(msg);
 
 /**
@@ -117,8 +119,8 @@ cli.command('traffic', 'Get traffic history', {}, async (/** @type {ArgumentsCam
 // --- WIFI DOCTOR ---
 
 cli.command('scan [band]', 'Scan Wi-Fi networks', (yargs) => {
-	return yargs.positional('band', { type: 'string', choices: ['2.4', '5'], default: '2.4' });
-}, async (/** @type {ArgumentsCamelCase<CommonArgs & {band: '2.4'|'5'}>} */ argv) => {
+	return yargs.positional('band', { type: 'string', choices: WIFI_BANDS, default: WIFI_BANDS[0] });
+}, async (/** @type {ArgumentsCamelCase<CommonArgs & {band: WifiBand}>} */ argv) => {
 	const client = getClient(argv);
 	logInfo(`Scanning ${argv.band}GHz networks...`);
 	const networks = await client.startScan(argv.band);
@@ -131,8 +133,8 @@ cli.command('scan [band]', 'Scan Wi-Fi networks', (yargs) => {
 });
 
 cli.command('doctor [band]', 'Analyze Wi-Fi environment and recommend channel', (yargs) => {
-	return yargs.positional('band', { type: 'string', choices: ['2.4', '5'], default: '2.4' });
-}, async (/** @type {ArgumentsCamelCase<CommonArgs & {band: '2.4'|'5'}>} */ argv) => {
+	return yargs.positional('band', { type: 'string', choices: WIFI_BANDS, default: WIFI_BANDS[0] });
+}, async (/** @type {ArgumentsCamelCase<CommonArgs & {band: WifiBand}>} */ argv) => {
 	const client = getClient(argv);
 	logInfo(`Scanning and analyzing ${argv.band}GHz spectrum...`);
 	const result = await client.getBestChannel(argv.band);
@@ -164,17 +166,17 @@ cli.command('set <pairs..>', 'Set parameters (key=value)', (yargs) => {
 		.option('action', {
 			type: 'string',
 			describe: 'Action mode',
-			default: 'Apply',
+			default: CONFIG_ACTION.APPLY.trim(),
+			choices: CONFIG_ACTION_VALUES.map(m => m.trim()),
 			coerce: (arg) => {
-				const clean = arg.trim();
-				const match = ACTION_MODE.map(m => m.trim()).find(m => m.toLowerCase() === clean.toLowerCase());
+				const clean = arg.trim().toLowerCase();
+				const match = CONFIG_ACTION_VALUES.map(m => m.trim()).find(m => m.toLowerCase() === clean);
 				return match || arg;
-			},
-			choices: ACTION_MODE.map(m => m.trim())
+			}
 		})
 		.example('$0 set rt_ssid=MyWifi --page "Advanced_WAdvanced_Content.asp"', 'Apply settings via Web UI')
 		.example('$0 set "rt_ACLList=AA:BB:CC:DD:EE:FF" --action Add --group rt_ACLList', 'Add MAC to filter');
-}, async (/** @type {ArgumentsCamelCase<CommonArgs & {pairs: string[], sid?: string|ServiceId[], page?: string, action?: ActionMode, group?: GroupId, script?: string}>} */ argv) => {
+}, async (/** @type {ArgumentsCamelCase<CommonArgs & {pairs: string[], sid?: string|ServiceId[], page?: string, action?: ConfigAction, group?: GroupId, script?: string}>} */ argv) => {
 	const client = getClient(argv);
 	const /** @type {Record<string, string>} */ params = {};
 	argv.pairs.forEach(p => {
@@ -182,7 +184,7 @@ cli.command('set <pairs..>', 'Set parameters (key=value)', (yargs) => {
 		if (k)
 			params[k] = v.join('=');
 	});
-	const action_mode = ACTION_MODE.find(m => m.trim() === argv.action) || argv.action;
+	const action_mode = CONFIG_ACTION_VALUES.find(m => m.trim() === argv.action) || argv.action;
 	await client.setParams(params, {
 		action_mode,
 		action_script: argv.script,
@@ -191,6 +193,23 @@ cli.command('set <pairs..>', 'Set parameters (key=value)', (yargs) => {
 		current_page: argv.page
 	});
 	logInfo('Settings applied successfully.');
+});
+
+cli.command('call <action>', 'Call a system action', (yargs) => {
+	return yargs
+		.positional('action', {
+			describe: 'System action to execute',
+			choices: SYSTEM_ACTION_VALUES.map(v => v.trim())
+		})
+		.coerce('action', (arg) => {
+			const clean = arg.trim().toLowerCase();
+			const match = SYSTEM_ACTION_VALUES.map(m => m.trim()).find(v => v.toLowerCase() === clean);
+			return match;
+		});
+}, async (/** @type {ArgumentsCamelCase<CommonArgs & {action: SystemAction}>} */ argv) => {
+	const client = getClient(argv);
+	await client.sendAction(argv.action);
+	logInfo('Action sent.');
 });
 
 // --- FIRMWARE ---
