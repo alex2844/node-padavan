@@ -224,19 +224,25 @@ export default class Padavan {
 		const kvPairs = Object.entries(params);
 		if (kvPairs.length === 0)
 			return;
-		const page = options.current_page || options.next_page;
 
-		let sidList = options.sid_list;
-		if (Array.isArray(sidList))
-			sidList = sidList.join(';') + ';';
-		else if (!sidList && page) {
+		const page = options.current_page || options.next_page;
+		let sid_list = options.sid_list;
+		let group_id = options.group_id || '';
+
+		if (Array.isArray(sid_list))
+			sid_list = sid_list.join(';') + ';';
+		else if (!sid_list && page) {
 			this.log('debug', `sid_list not provided, searching on ${page}...`);
 			try {
 				const html = await this.#http.get(page);
 				const pageInputs = parsePageInputs(html);
 				if (pageInputs['sid_list']) {
-					sidList = pageInputs['sid_list'];
-					this.log('debug', `Found sid_list: ${sidList}`);
+					sid_list = pageInputs['sid_list'];
+					this.log('debug', `Found sid_list: ${sid_list}`);
+					if (!group_id && pageInputs['group_id']) {
+						group_id = pageInputs['group_id'];
+						this.log('debug', `Auto-detected group_id: ${group_id}`);
+					}
 				} else
 					this.log('warn', `Could not find sid_list on ${page}`);
 			} catch (e) {
@@ -248,18 +254,18 @@ export default class Padavan {
 		this.#nvramPromise = null;
 		this.#nvramTimestamp = 0;
 
-		if (sidList) {
+		if (sid_list) {
 			const data = {
+				sid_list, group_id,
 				action_mode: options.action_mode || ' Apply ',
 				action_script: options.action_script || '',
-				sid_list: sidList,
-				group_id: options.group_id || '',
 				current_page: page || 'index.asp',
 				next_page: options.next_page || page || 'index.asp',
 				...params
 			};
+			this.log('debug', `POST ${PAGES.START_APPLY} payload:`, data);
 			try {
-				await this.#http.post(PAGES.APPLY, data);
+				await this.#http.post(PAGES.START_APPLY, data);
 				return true;
 			} catch (e) {
 				this.log('debug', 'setParams (UI) finished', e.message);
@@ -276,6 +282,19 @@ export default class Padavan {
 
 		await this.exec(commands.join('; '));
 		return true;
+	};
+
+	/**
+	 * Отправляет системную команду на apply.cgi.
+	 * @param {SystemAction} action Режим действия.
+	 * @param {Object} [payload] Дополнительные данные.
+	 */
+	async sendAction(action, payload = {}) {
+		this.log('info', `Sending system action: ${action.trim()}`);
+		await this.#http.post(PAGES.APPLY, {
+			action_mode: action,
+			...payload
+		});
 	};
 
 	/**
