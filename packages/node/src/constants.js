@@ -32,17 +32,57 @@ export const NVRAM_CACHE_TTL = 3_000;
 
 /**
  * Режимы действия для apply.cgi.
- * Обратите внимание: большинство команд требуют пробелы по краям.
- * @typedef {(typeof ACTION_MODE)[number]} ActionMode
+ * @typedef {(typeof SYSTEM_ACTION)[keyof typeof SYSTEM_ACTION]} SystemAction
  */
-export const ACTION_MODE = /** @type {const} */ ([
-	' Apply ', ' Restart ', ' Reboot ', ' Shutdown ',
-	' Add ', ' Del ', ' ClearLog ', ' SystemCmd ',
-	' CommitFlash ', ' RestoreNVRAM ', ' RestoreStorage ', ' FreeMemory ',
-	' NTPSyncNow ', ' CreateCertHTTPS ', ' CheckCertHTTPS ',
-	' CreateCertOVPNS ', ' ExportConfOVPNC ', ' ExportWGConf ',
-	' wg_action ', 'Update'
-]);
+export const SYSTEM_ACTION = /** @type {const} */ ({
+	/** Полная перезагрузка роутера */
+	REBOOT: ' Reboot ',
+	/** Выключение роутера */
+	SHUTDOWN: ' Shutdown ',
+	/** Очистить системный лог */
+	CLEAR_LOG: ' ClearLog ',
+	/** Выполнить системную команду */
+	SYSTEM_CMD: ' SystemCmd ',
+	/** Сохранить NVRAM во флеш-память */
+	COMMIT_FLASH: ' CommitFlash ',
+	/** Сброс настроек к заводским */
+	RESTORE_NVRAM: ' RestoreNVRAM ',
+	/** Восстановить /etc/storage из сжатого файла */
+	RESTORE_STORAGE: ' RestoreStorage ',
+	/** Сбросить кэши памяти */
+	FREE_MEMORY: ' FreeMemory ',
+	/** Принудительная синхронизация времени */
+	NTP_SYNC_NOW: ' NTPSyncNow ',
+	/** Генерировать сертификат для HTTPS */
+	CREATE_CERT_HTTPS: ' CreateCertHTTPS ',
+	/** Проверка наличия SSL сертификата */
+	CHECK_CERT_HTTPS: ' CheckCertHTTPS ',
+	/** Генерировать ключи/сертификаты для OpenVPN сервера */
+	CREATE_CERT_OVPNS: ' CreateCertOVPNS ',
+	/** Экспорт конфига OpenVPN клиента */
+	EXPORT_CONF_OVPNC: ' ExportConfOVPNC ',
+	/** Экспорт конфига WireGuard */
+	EXPORT_WG_CONF: ' ExportWGConf ',
+	/** Действия WireGuard (требует доп. параметр action: genkey, pubkey, genpsk). */
+	WG_ACTION: ' wg_action '
+});
+
+/**
+ * Режимы действия для start_apply.htm.
+ * @typedef {(typeof CONFIG_ACTION)[keyof typeof CONFIG_ACTION]} ConfigAction
+ */
+export const CONFIG_ACTION = /** @type {const} */ ({
+	/** Применить настройки (без перезагрузки всего роутера, если возможно) */
+	APPLY: ' Apply ',
+	/** Применить настройки с явным перезапуском связанных сервисов */
+	RESTART: ' Restart ',
+	/** Добавить запись в список (используется с group_id) */
+	ADD: ' Add ',
+	/** Удалить запись из списка (используется с group_id) */
+	DEL: ' Del ',
+	/** Используется в связке с action_script (например, для обновления DDNS или статуса принтера) */
+	UPDATE: 'Update'
+});
 
 /**
  * Идентификаторы сервисов (Service ID).
@@ -65,6 +105,12 @@ export const GROUP_ID = /** @type {const} */ ([
 	'ACLList', 'rt_ACLList', 'RBRList', 'rt_RBRList',
 	'LWFilterList', 'VPNSACLList'
 ]);
+
+/**
+ * Диапазоны Wi-Fi.
+ * @typedef {(typeof WIFI_BANDS)[number]} WifiBand
+ */
+export const WIFI_BANDS = /** @type {const} */ (['2.4', '5']);
 
 /** Системные команды роутера. */
 export const COMMANDS = {
@@ -93,6 +139,8 @@ export const PAGES = {
 	SYSLOG: 'Main_LogStatus_Content.asp',
 	/** Страница обновления прошивки (POST) */
 	UPGRADE: 'upgrade.cgi',
-	/** Основная точка входа для применения настроек (POST) */
-	APPLY: 'apply.cgi'
+	/** Обработчик мгновенных действий (Reboot, Shell, AJAX) без редиректа */
+	APPLY: 'apply.cgi',
+	/** Обработчик применения настроек с сохранением NVRAM и перезапуском сервисов */
+	START_APPLY: 'start_apply.htm'
 };

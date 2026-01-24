@@ -7,8 +7,8 @@ import {
 	parsePageInputs, parseNvramOutput, parseLooseJson, normalizeTrafficHistory,
 	extractJsVariable, extractTextareaValue, extractMacsFromTextarea, extractCurrentChannel
 } from './utils/parsers.js';
-import { LOG_LEVELS, DEFAULT_LOG_LEVEL, LIB_ID, NVRAM_CACHE_TTL, PAGES, COMMANDS } from './constants.js';
-/** @import { ActionMode, ServiceId, GroupId } from './constants.js' */
+import { LOG_LEVELS, DEFAULT_LOG_LEVEL, LIB_ID, NVRAM_CACHE_TTL, SYSTEM_ACTION, PAGES, COMMANDS } from './constants.js';
+/** @import { SystemAction, ConfigAction, ServiceId, GroupId, WifiBand } from './constants.js' */
 /** @import { Config as HttpConfig } from './transport/http.js' */
 /** @import { Config as GithubConfig } from './transport/github.js' */
 /** @typedef {HttpConfig & GithubConfig} Credentials */
@@ -52,7 +52,7 @@ import { LOG_LEVELS, DEFAULT_LOG_LEVEL, LIB_ID, NVRAM_CACHE_TTL, PAGES, COMMANDS
  * @property {string} [next_page] Страница перенаправления.
  * @property {string|ServiceId[]} [sid_list] Строка или массив сервисов для перезапуска.
  * @property {GroupId} [group_id] ID группы.
- * @property {ActionMode} [action_mode=' Apply '] Режим действия.
+ * @property {ConfigAction} [action_mode=' Apply '] Режим действия.
  * @property {string} [action_script] Имя скрипта.
  */
 
@@ -156,7 +156,7 @@ export default class Padavan {
 				throw new Error('HTTP client not initialized');
 			try {
 				await this.#http.post(PAGES.APPLY, {
-					action_mode: ' SystemCmd ',
+					action_mode: SYSTEM_ACTION.SYSTEM_CMD,
 					SystemCmd: command
 				});
 				const response = await this.#http.get(PAGES.CONSOLE_RESPONSE);
@@ -376,7 +376,7 @@ export default class Padavan {
 	/**
 	 * Сканирование эфира.
 	 * ВНИМАНИЕ: Если вы подключены по Wi-Fi к сканируемому диапазону, соединение разорвется.
-	 * @param {'2.4'|'5'} [band='2.4'] Частотный диапазон.
+	 * @param {WifiBand} [band='2.4'] Частотный диапазон.
 	 * @returns {Promise<WifiNetwork[]>} Список найденных сетей, отсортированный по уровню сигнала.
 	 */
 	async startScan(band = '2.4') {
@@ -409,7 +409,7 @@ export default class Padavan {
 
 	/**
 	 * Анализирует эфир и предлагает лучший канал с учетом совместимости и региона.
-	 * @param {'2.4'|'5'} [band='2.4'] Частотный диапазон.
+	 * @param {WifiBand} [band='2.4'] Частотный диапазон.
 	 * @param {WifiNetwork[]} [scanResults] Опционально: результаты сканирования.
 	 * @returns {Promise<ChannelAnalysis>} Результат анализа.
 	 */
@@ -561,7 +561,7 @@ export default class Padavan {
 		this.log('warn', 'Rebooting router via HTTP...');
 		try {
 			await this.#http.post(PAGES.APPLY, {
-				action_mode: ' Reboot '
+				action_mode: SYSTEM_ACTION.REBOOT
 			});
 		} catch (e) {
 			this.log('debug', 'Reboot request sent (network error expected)', e.message);
