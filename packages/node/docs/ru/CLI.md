@@ -69,6 +69,9 @@ padavan --help
   Показать статистику трафика (за день и месяц).
 - **`padavan reboot`**
   Перезагрузить роутер.
+- **`padavan call <action> [payload..]`**
+  Выполнить низкоуровневое системное действие (`apply.cgi`).
+  *Пример:* `padavan call SystemCmd ls -la`
 
 ### Сеть и Wi-Fi
 

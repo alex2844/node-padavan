@@ -70,6 +70,10 @@ The constructor accepts a config object with the following properties:
 - **`exec(command)`**
   Executes a system command via the web console emulator (`SystemCmd`).
   *Returns:* Command output (stdout + stderr).
+- **`sendAction(action, payload?)`**
+  Sends a low-level action to `apply.cgi`.
+  *Arguments:* `action` (string, e.g., `' Reboot '`), `payload` (data object).
+  *Returns:* Server response (command output or status).
 - **`startReboot()`**
   Reboots the router via HTTP command.
 

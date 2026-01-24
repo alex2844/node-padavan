@@ -206,7 +206,6 @@ cli.command('call <action> [payload...]', 'Call a system action', (yargs) => {
 				return match;
 			}
 		})
-		.example('$0 call Reboot', 'Reboot the router')
 		.example('$0 call SystemCmd ls -la /tmp', 'Execute a shell command')
 		.example('$0 call wg_action action=genkey', 'Pass payload for wg_action');
 }, async (/** @type {ArgumentsCamelCase<CommonArgs & {action: SystemAction, payload?: string[]}>} */ argv) => {

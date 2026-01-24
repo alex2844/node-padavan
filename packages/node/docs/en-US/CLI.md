@@ -68,6 +68,9 @@ shell:
   Show daily and monthly traffic statistics.
 - **`padavan reboot`**
   Reboot the router.
+- **`padavan call <action> [payload..]`**
+  Execute a low-level system action (`apply.cgi`).
+  *Example:* `padavan call SystemCmd ls -la`
 
 ### Network & Wi-Fi
 
