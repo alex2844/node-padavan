@@ -195,21 +195,39 @@ cli.command('set <pairs..>', 'Set parameters (key=value)', (yargs) => {
 	logInfo('Settings applied successfully.');
 });
 
-cli.command('call <action>', 'Call a system action', (yargs) => {
+cli.command('call <action> [payload...]', 'Call a system action', (yargs) => {
 	return yargs
 		.positional('action', {
 			describe: 'System action to execute',
-			choices: SYSTEM_ACTION_VALUES.map(v => v.trim())
+			choices: SYSTEM_ACTION_VALUES.map(v => v.trim()),
+			coerce: (arg) => {
+				const clean = arg.trim().toLowerCase();
+				const match = SYSTEM_ACTION_VALUES.map(m => m.trim()).find(v => v.toLowerCase() === clean);
+				return match;
+			}
 		})
-		.coerce('action', (arg) => {
-			const clean = arg.trim().toLowerCase();
-			const match = SYSTEM_ACTION_VALUES.map(m => m.trim()).find(v => v.toLowerCase() === clean);
-			return match;
-		});
-}, async (/** @type {ArgumentsCamelCase<CommonArgs & {action: SystemAction}>} */ argv) => {
+		.example('$0 call Reboot', 'Reboot the router')
+		.example('$0 call SystemCmd ls -la /tmp', 'Execute a shell command')
+		.example('$0 call wg_action action=genkey', 'Pass payload for wg_action');
+}, async (/** @type {ArgumentsCamelCase<CommonArgs & {action: SystemAction, payload?: string[]}>} */ argv) => {
 	const client = getClient(argv);
-	await client.sendAction(argv.action);
-	logInfo('Action sent.');
+	const action = SYSTEM_ACTION_VALUES.find(m => m.trim() === argv.action) || argv.action;
+	const payload = {};
+	if (argv.payload && argv.payload.length > 0) {
+		if (action === SYSTEM_ACTION.SYSTEM_CMD)
+			payload.SystemCmd = argv.payload.join(' ');
+		else
+			argv.payload.forEach(p => {
+				const [key, ...valParts] = p.split('=');
+				if (key)
+					payload[key] = valParts.join('=');
+			});
+	}
+	logInfo(`Executing action: ${action.trim()}`);
+	if (Object.keys(payload).length > 0)
+		logInfo(`With payload: ${JSON.stringify(payload)}`);
+	const result = await client.sendAction(action, payload);
+	printOutput(argv, result);
 });
 
 // --- FIRMWARE ---
